@@ -1,0 +1,10 @@
+node_modules
+dist
+test
+.git
+.github
+*.md
+.env*
+.eslint*
+.prettierrc*
+coverage
