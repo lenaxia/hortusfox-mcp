@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -10,12 +10,15 @@ const TOKEN = "real-token-1234567890";
 
 function bodyText(result: { content: unknown[] }): string {
   const entry = result.content.find(
-    (c) => (c as { type: string }).type === "text"
+    (c) => (c as { type: string }).type === "text",
   ) as { text?: string } | undefined;
   return entry?.text ?? "";
 }
 
-async function buildMcpClient(baseUrl: string, overrides: Record<string, unknown> = {}) {
+async function buildMcpClient(
+  baseUrl: string,
+  overrides: Record<string, unknown> = {},
+) {
   const config = {
     baseUrl,
     apiToken: TOKEN,
@@ -39,8 +42,13 @@ async function buildMcpClient(baseUrl: string, overrides: Record<string, unknown
 describe("e2e: auth and error propagation", () => {
   it("U-e2e-010: wrong token -> 403 surfaces as auth error in MCP result", async () => {
     const mock = await startMockHortusFox(
-      { "GET /api/plants/list": () => ({ status: 200, body: { code: 200, list: [] } }) },
-      { token: "different-token" }
+      {
+        "GET /api/plants/list": () => ({
+          status: 200,
+          body: { code: 200, list: [] },
+        }),
+      },
+      { token: "different-token" },
     );
     const { mcp, close } = await buildMcpClient(mock.url);
     try {
@@ -61,7 +69,7 @@ describe("e2e: auth and error propagation", () => {
           body: { code: 500, msg: "DB connection refused" },
         }),
       },
-      { token: TOKEN }
+      { token: TOKEN },
     );
     const { mcp, close } = await buildMcpClient(mock.url);
     try {
@@ -77,12 +85,13 @@ describe("e2e: auth and error propagation", () => {
   it("U-e2e-012: HTTP 502 with HTML body surfaces HTTP status", async () => {
     const mock = await startMockHortusFox(
       {
-        "GET /api/plants/list": () => ({
-          status: 502,
-          body: "<html>Bad Gateway</html>",
-        }) as never,
+        "GET /api/plants/list": () =>
+          ({
+            status: 502,
+            body: "<html>Bad Gateway</html>",
+          }) as never,
       },
-      { token: TOKEN }
+      { token: TOKEN },
     );
     const { mcp, close } = await buildMcpClient(mock.url);
     try {
@@ -114,7 +123,7 @@ describe("e2e: auth and error propagation", () => {
           body: { code: 200, list: [] },
         }),
       },
-      { token: TOKEN, latencyMs: 500 }
+      { token: TOKEN, latencyMs: 500 },
     );
     const { mcp, close } = await buildMcpClient(mock.url, { timeoutMs: 50 });
     try {
@@ -130,7 +139,7 @@ describe("e2e: auth and error propagation", () => {
   it("H-e2e-015: 403 error message includes masked token preview", async () => {
     const mock = await startMockHortusFox(
       { "GET /api/plants/list": () => ({ status: 200, body: { code: 200 } }) },
-      { token: "different-token" }
+      { token: "different-token" },
     );
     const { mcp, close } = await buildMcpClient(mock.url);
     try {

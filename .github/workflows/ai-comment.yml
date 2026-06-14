@@ -1,0 +1,189 @@
+name: AI Commands
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  respond:
+    if: |
+      (startsWith(github.event.comment.body, '/ai') ||
+       startsWith(github.event.comment.body, '/review') ||
+       startsWith(github.event.comment.body, '/fix') ||
+       startsWith(github.event.comment.body, '/implement') ||
+       startsWith(github.event.comment.body, '/analyze') ||
+       startsWith(github.event.comment.body, '/test') ||
+       startsWith(github.event.comment.body, '/security') ||
+       startsWith(github.event.comment.body, '/explain') ||
+       startsWith(github.event.comment.body, '/triage') ||
+       startsWith(github.event.comment.body, '/help') ||
+       contains(github.event.comment.body, ' /ai') ||
+       contains(github.event.comment.body, ' /review') ||
+       contains(github.event.comment.body, ' /fix') ||
+       contains(github.event.comment.body, ' /implement') ||
+       contains(github.event.comment.body, ' /analyze') ||
+       contains(github.event.comment.body, ' /test') ||
+       contains(github.event.comment.body, ' /security') ||
+       contains(github.event.comment.body, ' /explain') ||
+       contains(github.event.comment.body, ' /triage') ||
+       contains(github.event.comment.body, ' /help')) &&
+      (github.event.comment.author_association == 'OWNER' ||
+       github.event.comment.author_association == 'MEMBER' ||
+       github.event.comment.author_association == 'COLLABORATOR')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Build prompt
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          PR_URL: ${{ github.event.issue.pull_request.url }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+
+          CONTEXT_FILE=".github/prompts/context.md"
+          CORE_FILE=".github/prompts/core-rules.md"
+          FOOTER_FILE=".github/prompts/commands-footer.md"
+          WORKFLOW_FILE=".github/prompts/code-change-workflow.md"
+          OUT="/tmp/opencode_prompt.txt"
+
+          COMMAND=""
+          case "$COMMENT_BODY" in
+            /implement\ *|/implement) COMMAND="/implement" ;;
+            /security\ *|/security)   COMMAND="/security" ;;
+            /analyze\ *|/analyze)     COMMAND="/analyze" ;;
+            /review\ *|/review)       COMMAND="/review" ;;
+            /explain\ *|/explain)     COMMAND="/explain" ;;
+            /triage\ *|/triage)       COMMAND="/triage" ;;
+            /test\ *|/test)           COMMAND="/test" ;;
+            /fix\ *|/fix)             COMMAND="/fix" ;;
+            /help\ *|/help)           COMMAND="/help" ;;
+            /ai\ *|/ai)               COMMAND="/ai" ;;
+            *" /implement "*) COMMAND="/implement" ;;
+            *" /security "*)  COMMAND="/security" ;;
+            *" /analyze "*)   COMMAND="/analyze" ;;
+            *" /review "*)    COMMAND="/review" ;;
+            *" /explain "*)   COMMAND="/explain" ;;
+            *" /triage "*)    COMMAND="/triage" ;;
+            *" /test "*)      COMMAND="/test" ;;
+            *" /fix "*)       COMMAND="/fix" ;;
+            *" /help "*)      COMMAND="/help" ;;
+            *" /ai "*)        COMMAND="/ai" ;;
+            *)               COMMAND="/ai" ;;
+          esac
+
+          NOTE="$(printf '%s' "$COMMENT_BODY" | sed "s|.*${COMMAND}||" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')"
+
+          cat "$CONTEXT_FILE" > "$OUT"
+          printf '\n\n---\n\n' >> "$OUT"
+          cat "$CORE_FILE" >> "$OUT"
+          printf '\n\n---\n\n' >> "$OUT"
+
+          case "$COMMAND" in
+            /review)
+              cat ".github/prompts/pr-review.md" >> "$OUT"
+              if [ -n "$NOTE" ]; then
+                printf '\n\nAdditional review focus from collaborator:\n\n> %s\n' "$NOTE" >> "$OUT"
+              fi
+              printf '\n\nA collaborator requested an explicit review using `/review`.\n' >> "$OUT"
+              ;;
+            /fix)
+              cat ".github/prompts/fix.md" >> "$OUT"
+              printf '\n\n' >> "$OUT"
+              cat "$WORKFLOW_FILE" >> "$OUT"
+              if [ -n "$NOTE" ]; then
+                printf '\n\nBug or issue to fix:\n\n> %s\n' "$NOTE" >> "$OUT"
+              fi
+              ;;
+            /implement)
+              cat ".github/prompts/implement.md" >> "$OUT"
+              printf '\n\n' >> "$OUT"
+              cat "$WORKFLOW_FILE" >> "$OUT"
+              if [ -n "$NOTE" ]; then
+                printf '\n\nFeature or story to implement:\n\n> %s\n' "$NOTE" >> "$OUT"
+              fi
+              ;;
+            /test)
+              cat ".github/prompts/test.md" >> "$OUT"
+              printf '\n\n' >> "$OUT"
+              cat "$WORKFLOW_FILE" >> "$OUT"
+              if [ -n "$NOTE" ]; then
+                printf '\n\nTarget to write or improve tests for:\n\n> %s\n' "$NOTE" >> "$OUT"
+              fi
+              ;;
+            /security)
+              cat ".github/prompts/security.md" >> "$OUT"
+              printf '\n\n' >> "$OUT"
+              cat "$WORKFLOW_FILE" >> "$OUT"
+              if [ -n "$NOTE" ]; then
+                printf '\n\nSecurity review focus:\n\n> %s\n' "$NOTE" >> "$OUT"
+              fi
+              ;;
+            /analyze)
+              cat ".github/prompts/analyze.md" >> "$OUT"
+              if [ -n "$NOTE" ]; then
+                printf '\n\nAnalysis focus:\n\n> %s\n' "$NOTE" >> "$OUT"
+              fi
+              ;;
+            /explain)
+              cat ".github/prompts/explain.md" >> "$OUT"
+              if [ -n "$NOTE" ]; then
+                printf '\n\nTopic to explain:\n\n> %s\n' "$NOTE" >> "$OUT"
+              fi
+              ;;
+            /triage)
+              cat ".github/prompts/triage.md" >> "$OUT"
+              if [ -n "$NOTE" ]; then
+                printf '\n\nTriage context:\n\n> %s\n' "$NOTE" >> "$OUT"
+              fi
+              ;;
+            /help)
+              cat ".github/prompts/help.md" >> "$OUT"
+              ;;
+            /ai)
+              if [ -n "$NOTE" ]; then
+                printf 'A collaborator has asked:\n\n> %s\n\nAddress this request. For any code changes: create a feature branch, open a PR, never commit to main directly.\n' "$NOTE" >> "$OUT"
+              elif [ -n "$PR_URL" ] || [ "$EVENT_NAME" = "pull_request_review_comment" ]; then
+                cat ".github/prompts/pr-review.md" >> "$OUT"
+                printf '\n\nA collaborator triggered a re-review by posting `/ai`. Re-assess the PR in full.\n' >> "$OUT"
+              else
+                cat ".github/prompts/issue-responder.md" >> "$OUT"
+                printf '\n\nA collaborator triggered you by posting `/ai`. Analyze the full issue thread and take the appropriate action.\n' >> "$OUT"
+              fi
+              ;;
+          esac
+
+          printf '\n\n' >> "$OUT"
+          cat "$FOOTER_FILE" >> "$OUT"
+
+          {
+            echo "OPENCODE_PROMPT<<__PROMPT_EOF__"
+            cat "$OUT"
+            echo "__PROMPT_EOF__"
+          } >> "$GITHUB_ENV"
+
+      - name: Run OpenCode
+        uses: anomalyco/opencode/github@0cf0294787322664c6d668fa5ab0a9ce26796f78 # github-v1.2.9
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_BASE: ${{ secrets.OPENAI_API_BASE }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: openai-compatible/default
+          use_github_token: "true"
+          share: "false"
+          mentions: /ai
+          prompt: ${{ env.OPENCODE_PROMPT }}

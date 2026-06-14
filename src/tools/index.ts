@@ -12,7 +12,7 @@ import { registerTaskTools } from "./tasks.js";
 export function registerAllTools(
   server: McpServer,
   client: HortusFoxClient,
-  config: Config
+  config: Config,
 ): void {
   registerPlantTools(server, client, config);
   registerLocationTools(server, client);

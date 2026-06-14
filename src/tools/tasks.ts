@@ -12,7 +12,7 @@ const RECURRING_SCOPES = z
 export function registerTaskTools(
   server: McpServer,
   client: HortusFoxClient,
-  config: Config
+  config: Config,
 ): void {
   server.tool(
     "tasks_list",
@@ -28,7 +28,7 @@ export function registerTaskTools(
     async (args) => {
       const data = await client.get("/tasks/fetch", args);
       return jsonResult(data);
-    }
+    },
   );
 
   if (!config.enableWrites) return;
@@ -48,7 +48,9 @@ export function registerTaskTools(
         .int()
         .positive()
         .optional()
-        .describe("Quantity of recurrence (requires due_date + recurring_scope)."),
+        .describe(
+          "Quantity of recurrence (requires due_date + recurring_scope).",
+        ),
       recurring_scope: RECURRING_SCOPES.optional().default("hours"),
       plant: z
         .number()
@@ -68,7 +70,7 @@ export function registerTaskTools(
       if (args.plant !== undefined) params.plant = args.plant;
       const data = await client.get("/tasks/add", params);
       return jsonResult(data);
-    }
+    },
   );
 
   server.tool(
@@ -88,7 +90,7 @@ export function registerTaskTools(
     async (args) => {
       const data = await client.get("/tasks/edit", args);
       return jsonResult(data);
-    }
+    },
   );
 
   server.tool(
@@ -103,7 +105,7 @@ export function registerTaskTools(
         done: true,
       });
       return jsonResult(data);
-    }
+    },
   );
 
   registerConfirmableRemove(
@@ -115,6 +117,6 @@ export function registerTaskTools(
       const data = await client.get("/tasks/remove", { task });
       return data;
     },
-    async () => ({ note: "Task will be permanently deleted." })
+    async () => ({ note: "Task will be permanently deleted." }),
   );
 }

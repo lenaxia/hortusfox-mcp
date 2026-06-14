@@ -8,18 +8,26 @@ describe("rate-limiter", () => {
 
   it("H-rate-001: capacity=3 burst resolves instantly", async () => {
     const limiter = new RateLimiter(3, 3);
-    await Promise.all([limiter.acquire(), limiter.acquire(), limiter.acquire()]);
+    await Promise.all([
+      limiter.acquire(),
+      limiter.acquire(),
+      limiter.acquire(),
+    ]);
   });
 
   it("E-rate-002: 4th acquire blocks then resolves after time passes", async () => {
     const nowMs = { v: 1_000_000 };
     vi.spyOn(Date, "now").mockImplementation(() => nowMs.v);
     const realSetTimeout = setTimeout;
-    const sleepReal = (ms: number) =>
+    const sleepReal = (_ms: number) =>
       new Promise<void>((r) => realSetTimeout(() => r(), 0));
 
     const limiter = new RateLimiter(3, 3);
-    await Promise.all([limiter.acquire(), limiter.acquire(), limiter.acquire()]);
+    await Promise.all([
+      limiter.acquire(),
+      limiter.acquire(),
+      limiter.acquire(),
+    ]);
 
     let resolved = false;
     const p = limiter.acquire().then(() => {

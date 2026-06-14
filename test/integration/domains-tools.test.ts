@@ -6,15 +6,20 @@ import { expectMcpError } from "../helpers/matchers.js";
 async function callExpectingError(
   mcp: Awaited<ReturnType<typeof startServer>>["mcp"],
   name: string,
-  arguments_: Record<string, unknown>
+  arguments_: Record<string, unknown>,
 ): Promise<McpToolResultShape> {
   try {
-    const r = (await mcp.callTool({ name, arguments: arguments_ })) as McpToolResultShape;
+    const r = (await mcp.callTool({
+      name,
+      arguments: arguments_,
+    })) as McpToolResultShape;
     return r;
   } catch (e) {
     return {
       isError: true,
-      content: [{ type: "text", text: e instanceof Error ? e.message : String(e) }],
+      content: [
+        { type: "text", text: e instanceof Error ? e.message : String(e) },
+      ],
     };
   }
 }
@@ -26,7 +31,7 @@ interface McpToolResultShape {
 
 function bodyText(result: { content: unknown[] }): string {
   const entry = result.content.find(
-    (c) => (c as { type: string }).type === "text"
+    (c) => (c as { type: string }).type === "text",
   ) as { text?: string } | undefined;
   return entry?.text ?? "";
 }
@@ -47,16 +52,24 @@ describe("domain tools (integration)", () => {
 
   describe("locations", () => {
     it("H-loc-001: locations_list default path and minimal params", async () => {
-      fetcher.setDefault({ status: 200, body: { code: 200, list: [{ id: 1, name: "Living Room" }] } });
+      fetcher.setDefault({
+        status: 200,
+        body: { code: 200, list: [{ id: 1, name: "Living Room" }] },
+      });
       const { mcp, close } = await startServer({ enableWrites: false });
       try {
-        const result = await mcp.callTool({ name: "locations_list", arguments: {} });
+        const result = await mcp.callTool({
+          name: "locations_list",
+          arguments: {},
+        });
         const { path, query } = parseUrl(lastCall(fetcher).url);
         expect(path).toBe("/api/locations/list");
         expect(query.has("only_active")).toBe(true);
         expect(query.get("only_active")).toBe("0");
         expect(query.has("include_plants")).toBe(true);
-        expect(JSON.parse(bodyText(result))).toEqual({ list: [{ id: 1, name: "Living Room" }] });
+        expect(JSON.parse(bodyText(result))).toEqual({
+          list: [{ id: 1, name: "Living Room" }],
+        });
       } finally {
         await close();
       }
@@ -68,7 +81,11 @@ describe("domain tools (integration)", () => {
       try {
         await mcp.callTool({
           name: "locations_list",
-          arguments: { only_active: true, include_plants: true, include_info: "id,name" },
+          arguments: {
+            only_active: true,
+            include_plants: true,
+            include_info: "id,name",
+          },
         });
         const { query } = parseUrl(lastCall(fetcher).url);
         expect(query.get("only_active")).toBe("1");
@@ -100,7 +117,10 @@ describe("domain tools (integration)", () => {
       fetcher.setDefault({ status: 200, body: { code: 200, data: {} } });
       const { mcp, close } = await startServer({ enableWrites: false });
       try {
-        await mcp.callTool({ name: "locations_info", arguments: { location: "7" } });
+        await mcp.callTool({
+          name: "locations_info",
+          arguments: { location: "7" },
+        });
         const { query } = parseUrl(lastCall(fetcher).url);
         expect(query.get("location")).toBe("7");
       } finally {
@@ -113,7 +133,10 @@ describe("domain tools (integration)", () => {
 
   describe("tasks", () => {
     it("H-task-001: tasks_list default (done=false, limit=100)", async () => {
-      fetcher.setDefault({ status: 200, body: { code: 200, data: [{ id: 1 }] } });
+      fetcher.setDefault({
+        status: 200,
+        body: { code: 200, data: [{ id: 1 }] },
+      });
       const { mcp, close } = await startServer({ enableWrites: false });
       try {
         await mcp.callTool({ name: "tasks_list", arguments: {} });
@@ -130,7 +153,10 @@ describe("domain tools (integration)", () => {
       fetcher.setDefault({ status: 200, body: { code: 200, data: [] } });
       const { mcp, close } = await startServer({ enableWrites: false });
       try {
-        await mcp.callTool({ name: "tasks_list", arguments: { done: true, limit: 50 } });
+        await mcp.callTool({
+          name: "tasks_list",
+          arguments: { done: true, limit: 50 },
+        });
         const { query } = parseUrl(lastCall(fetcher).url);
         expect(query.get("done")).toBe("1");
         expect(query.get("limit")).toBe("50");
@@ -182,7 +208,9 @@ describe("domain tools (integration)", () => {
     it("U-task-005: tasks_add rejects missing title", async () => {
       const { mcp, close } = await startServer();
       try {
-        const r = await callExpectingError(mcp, "tasks_add", { description: "x" });
+        const r = await callExpectingError(mcp, "tasks_add", {
+          description: "x",
+        });
         expectMcpError(r);
         expect(fetcher.calls).toHaveLength(0);
       } finally {
@@ -232,7 +260,7 @@ describe("domain tools (integration)", () => {
         const text = bodyText(result);
         expect(text.startsWith("Not deleted.")).toBe(true);
         const deleteCalls = fetcher.calls.filter((c) =>
-          c.url.includes("/tasks/remove")
+          c.url.includes("/tasks/remove"),
         );
         expect(deleteCalls).toHaveLength(0);
       } finally {
@@ -249,7 +277,7 @@ describe("domain tools (integration)", () => {
           arguments: { task: 9, confirm: true },
         });
         const deleteCalls = fetcher.calls.filter((c) =>
-          c.url.includes("/tasks/remove")
+          c.url.includes("/tasks/remove"),
         );
         expect(deleteCalls).toHaveLength(1);
         const { query } = parseUrl(deleteCalls[0].url);
@@ -264,10 +292,16 @@ describe("domain tools (integration)", () => {
 
   describe("inventory", () => {
     it("H-inv-001: inventory_list default", async () => {
-      fetcher.setDefault({ status: 200, body: { code: 200, data: [{ id: 1 }] } });
+      fetcher.setDefault({
+        status: 200,
+        body: { code: 200, data: [{ id: 1 }] },
+      });
       const { mcp, close } = await startServer({ enableWrites: false });
       try {
-        const result = await mcp.callTool({ name: "inventory_list", arguments: {} });
+        const result = await mcp.callTool({
+          name: "inventory_list",
+          arguments: {},
+        });
         const { path } = parseUrl(lastCall(fetcher).url);
         expect(path).toBe("/api/inventory/fetch");
         expect(JSON.parse(bodyText(result))).toEqual({ data: [{ id: 1 }] });
@@ -412,7 +446,7 @@ describe("domain tools (integration)", () => {
           arguments: { item: 5, confirm: true },
         });
         const deleteCalls = fetcher.calls.filter((c) =>
-          c.url.includes("/inventory/remove")
+          c.url.includes("/inventory/remove"),
         );
         expect(deleteCalls).toHaveLength(1);
       } finally {
@@ -427,11 +461,19 @@ describe("domain tools (integration)", () => {
     it("H-cal-001: calendar_list default (server applies date defaults)", async () => {
       fetcher.setDefault({
         status: 200,
-        body: { code: 200, data: [], date_from: "2025-01-01", date_till: "2025-01-31" },
+        body: {
+          code: 200,
+          data: [],
+          date_from: "2025-01-01",
+          date_till: "2025-01-31",
+        },
       });
       const { mcp, close } = await startServer({ enableWrites: false });
       try {
-        const result = await mcp.callTool({ name: "calendar_list", arguments: {} });
+        const result = await mcp.callTool({
+          name: "calendar_list",
+          arguments: {},
+        });
         const { path } = parseUrl(lastCall(fetcher).url);
         expect(path).toBe("/api/calendar/fetch");
         const parsed = JSON.parse(bodyText(result));
@@ -480,7 +522,9 @@ describe("domain tools (integration)", () => {
     it("U-cal-004: calendar_add rejects missing name", async () => {
       const { mcp, close } = await startServer();
       try {
-        const r = await callExpectingError(mcp, "calendar_add", { date_from: "2025-01-01" });
+        const r = await callExpectingError(mcp, "calendar_add", {
+          date_from: "2025-01-01",
+        });
         expectMcpError(r);
       } finally {
         await close();
@@ -503,7 +547,11 @@ describe("domain tools (integration)", () => {
       try {
         await mcp.callTool({
           name: "calendar_edit",
-          arguments: { ident: 3, name: "Updated event", date_from: "2025-04-01" },
+          arguments: {
+            ident: 3,
+            name: "Updated event",
+            date_from: "2025-04-01",
+          },
         });
         const { path, query } = parseUrl(lastCall(fetcher).url);
         expect(path).toBe("/api/calendar/edit");
@@ -537,7 +585,7 @@ describe("domain tools (integration)", () => {
           arguments: { ident: 5, confirm: true },
         });
         const deleteCalls = fetcher.calls.filter((c) =>
-          c.url.includes("/calendar/remove")
+          c.url.includes("/calendar/remove"),
         );
         expect(deleteCalls).toHaveLength(1);
       } finally {
@@ -550,7 +598,10 @@ describe("domain tools (integration)", () => {
 
   describe("chat", () => {
     it("H-chat-001: chat_list default limit=50", async () => {
-      fetcher.setDefault({ status: 200, body: { code: 200, data: [{ id: 1 }] } });
+      fetcher.setDefault({
+        status: 200,
+        body: { code: 200, data: [{ id: 1 }] },
+      });
       const { mcp, close } = await startServer({ enableWrites: false });
       try {
         const result = await mcp.callTool({ name: "chat_list", arguments: {} });
@@ -618,7 +669,10 @@ describe("domain tools (integration)", () => {
 
   describe("backup (enableBackup=true)", () => {
     it("H-bak-001: backup_export forwards selected types", async () => {
-      fetcher.setDefault({ status: 200, body: { code: 200, file: "http://mock.test/backup/dump.zip" } });
+      fetcher.setDefault({
+        status: 200,
+        body: { code: 200, file: "http://mock.test/backup/dump.zip" },
+      });
       const { mcp, close } = await startServer({ enableBackup: true });
       try {
         const result = await mcp.callTool({
@@ -630,7 +684,9 @@ describe("domain tools (integration)", () => {
         expect(query.get("plants")).toBe("1");
         expect(query.get("tasks")).toBe("1");
         expect(query.get("locations")).toBe("0");
-        expect(JSON.parse(bodyText(result))).toEqual({ file: "http://mock.test/backup/dump.zip" });
+        expect(JSON.parse(bodyText(result))).toEqual({
+          file: "http://mock.test/backup/dump.zip",
+        });
       } finally {
         await close();
       }
@@ -661,7 +717,7 @@ describe("domain tools (integration)", () => {
         });
         expect(result.isError).toBeFalsy();
         const importCalls = fetcher.calls.filter((c) =>
-          c.url.includes("/backup/import")
+          c.url.includes("/backup/import"),
         );
         expect(importCalls).toHaveLength(1);
       } finally {
@@ -673,8 +729,12 @@ describe("domain tools (integration)", () => {
       const { mcp, close } = await startServer({ enableBackup: false });
       try {
         const list = await mcp.listTools();
-        expect(list.tools.find((t) => t.name === "backup_export")).toBeUndefined();
-        expect(list.tools.find((t) => t.name === "backup_import")).toBeUndefined();
+        expect(
+          list.tools.find((t) => t.name === "backup_export"),
+        ).toBeUndefined();
+        expect(
+          list.tools.find((t) => t.name === "backup_import"),
+        ).toBeUndefined();
       } finally {
         await close();
       }

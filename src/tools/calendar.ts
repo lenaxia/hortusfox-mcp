@@ -8,7 +8,7 @@ import { registerConfirmableRemove } from "./shared.js";
 export function registerCalendarTools(
   server: McpServer,
   client: HortusFoxClient,
-  config: Config
+  config: Config,
 ): void {
   server.tool(
     "calendar_list",
@@ -21,12 +21,14 @@ export function registerCalendarTools(
       date_till: z
         .string()
         .optional()
-        .describe("ISO date (YYYY-MM-DD). Defaults to +30 days from date_from."),
+        .describe(
+          "ISO date (YYYY-MM-DD). Defaults to +30 days from date_from.",
+        ),
     },
     async (args) => {
       const data = await client.get("/calendar/fetch", args);
       return jsonResult(data);
-    }
+    },
   );
 
   if (!config.enableWrites) return;
@@ -49,7 +51,7 @@ export function registerCalendarTools(
     async (args) => {
       const data = await client.get("/calendar/add", args);
       return jsonResult(data);
-    }
+    },
   );
 
   server.tool(
@@ -68,7 +70,7 @@ export function registerCalendarTools(
     async (args) => {
       const data = await client.get("/calendar/edit", args);
       return jsonResult(data);
-    }
+    },
   );
 
   registerConfirmableRemove(
@@ -80,6 +82,6 @@ export function registerCalendarTools(
       const data = await client.get("/calendar/remove", { ident });
       return data;
     },
-    async () => ({ note: "Calendar entry will be permanently deleted." })
+    async () => ({ note: "Calendar entry will be permanently deleted." }),
   );
 }

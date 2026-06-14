@@ -7,13 +7,11 @@ export interface McpToolResult {
 
 export function expectMcpError(
   received: McpToolResult,
-  options: { textContains?: string } = {}
+  options: { textContains?: string } = {},
 ): void {
   expect(received.isError).toBe(true);
   if (options.textContains !== undefined) {
-    const texts = received.content
-      .map((c) => c.text ?? "")
-      .join("\n");
+    const texts = received.content.map((c) => c.text ?? "").join("\n");
     expect(texts).toContain(options.textContains);
   }
 }

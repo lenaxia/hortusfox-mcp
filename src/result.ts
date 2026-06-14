@@ -11,5 +11,8 @@ export function textResult(text: string): CallToolResult {
 }
 
 export function errorResult(message: string): CallToolResult {
-  return { content: [{ type: "text", text: `Error: ${message}` }], isError: true };
+  return {
+    content: [{ type: "text", text: `Error: ${message}` }],
+    isError: true,
+  };
 }

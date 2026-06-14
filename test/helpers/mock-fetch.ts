@@ -16,7 +16,10 @@ export function mockFetch(): FetchInterceptor {
   let defaultSpec: ResponseSpec | null = null;
   const original = globalThis.fetch;
 
-  async function dispatcher(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  async function dispatcher(
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ): Promise<Response> {
     const url = typeof input === "string" ? input : input.toString();
     const mergedInit = init ?? { method: "GET" };
     calls.push({ url, init: mergedInit });
@@ -32,15 +35,18 @@ export function mockFetch(): FetchInterceptor {
         break;
       }
     }
-    if (!spec) spec = defaultSpec ?? { status: 404, body: { code: 404, msg: "no route" } };
+    if (!spec)
+      spec = defaultSpec ?? {
+        status: 404,
+        body: { code: 404, msg: "no route" },
+      };
 
     const resolved =
       typeof spec === "function" ? await spec(url, mergedInit) : spec;
     const status = resolved.status ?? 200;
     const contentType = resolved.contentType ?? "application/json";
     const body = resolved.body ?? {};
-    const text =
-      typeof body === "string" ? body : JSON.stringify(body);
+    const text = typeof body === "string" ? body : JSON.stringify(body);
     return new Response(text, {
       status,
       headers: { "Content-Type": contentType },
@@ -64,7 +70,10 @@ export function mockFetch(): FetchInterceptor {
   };
 }
 
-export function parseUrl(url: string): { path: string; query: URLSearchParams } {
+export function parseUrl(url: string): {
+  path: string;
+  query: URLSearchParams;
+} {
   const u = new URL(url);
   return { path: u.pathname, query: u.searchParams };
 }

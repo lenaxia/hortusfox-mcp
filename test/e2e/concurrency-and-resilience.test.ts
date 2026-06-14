@@ -11,12 +11,15 @@ const TOKEN = "real-token-1234567890";
 
 function bodyText(result: { content: unknown[] }): string {
   const entry = result.content.find(
-    (c) => (c as { type: string }).type === "text"
+    (c) => (c as { type: string }).type === "text",
   ) as { text?: string } | undefined;
   return entry?.text ?? "";
 }
 
-async function buildMcpClient(baseUrl: string, overrides: Record<string, unknown> = {}) {
+async function buildMcpClient(
+  baseUrl: string,
+  overrides: Record<string, unknown> = {},
+) {
   const config = {
     baseUrl,
     apiToken: TOKEN,
@@ -43,12 +46,12 @@ describe("e2e: concurrency & resilience", () => {
     let nextId = 100;
     const mock = await startMockHortusFox(
       {
-        "GET /api/plants/add": (_r, _s, ctx) => {
+        "GET /api/plants/add": (_r, _s, _ctx) => {
           const id = nextId++;
           return { status: 200, body: { code: 200, plant: id } };
         },
       },
-      { token: TOKEN }
+      { token: TOKEN },
     );
     const { mcp, close } = await buildMcpClient(mock.url);
     try {
@@ -57,8 +60,8 @@ describe("e2e: concurrency & resilience", () => {
           mcp.callTool({
             name: "plants_add",
             arguments: { name: `Plant${i}`, location: 1 },
-          })
-        )
+          }),
+        ),
       );
       const ids = results.map((r) => JSON.parse(bodyText(r)).plant);
       expect(new Set(ids).size).toBe(5);
@@ -78,7 +81,7 @@ describe("e2e: concurrency & resilience", () => {
           return { status: 200, body: { code: 200 } };
         },
       },
-      { token: TOKEN }
+      { token: TOKEN },
     );
     const { mcp, close } = await buildMcpClient(mock.url);
     try {
@@ -87,8 +90,8 @@ describe("e2e: concurrency & resilience", () => {
           mcp.callTool({
             name: "plants_update_attribute",
             arguments: { plant: 1, attribute: "notes", value: `note-${i}` },
-          })
-        )
+          }),
+        ),
       );
       expect(seenValues).toHaveLength(5);
       expect(new Set(seenValues).size).toBe(5);
@@ -108,7 +111,7 @@ describe("e2e: concurrency & resilience", () => {
           return { status: 200, body: { code: 200, plant: nextId++ } };
         },
       },
-      { token: TOKEN }
+      { token: TOKEN },
     );
     const { mcp, close } = await buildMcpClient(mock.url);
     try {
@@ -140,13 +143,19 @@ describe("e2e: photo URL workflow (#17)", () => {
       {
         "GET /api/plants/photo/update": (_r, _s, ctx) => {
           if (ctx.query.get("external") !== "1") {
-            return { status: 200, body: { code: 500, msg: "external required" } };
+            return {
+              status: 200,
+              body: { code: 500, msg: "external required" },
+            };
           }
           return { status: 200, body: { code: 200 } };
         },
         "GET /api/plants/gallery/add": (_r, _s, ctx) => {
           if (ctx.query.get("external") !== "1") {
-            return { status: 200, body: { code: 500, msg: "external required" } };
+            return {
+              status: 200,
+              body: { code: 500, msg: "external required" },
+            };
           }
           return { status: 200, body: { code: 200, item: 50 } };
         },
@@ -154,11 +163,14 @@ describe("e2e: photo URL workflow (#17)", () => {
           status: 200,
           body: {
             code: 200,
-            data: { plant: Number(ctx.query.get("plant")), gallery: [{ id: 50 }] },
+            data: {
+              plant: Number(ctx.query.get("plant")),
+              gallery: [{ id: 50 }],
+            },
           },
         }),
       },
-      { token: TOKEN }
+      { token: TOKEN },
     );
     const built = await buildMcpClient(mock.url);
     mcp = built.mcp;
@@ -180,7 +192,9 @@ describe("e2e: photo URL workflow (#17)", () => {
       },
     });
     expect(result.isError).toBeFalsy();
-    const call = mock.requests.filter((r) => r.path === "/api/plants/photo/update").at(-1);
+    const call = mock.requests
+      .filter((r) => r.path === "/api/plants/photo/update")
+      .at(-1);
     expect(call?.query.external).toBe("1");
     expect(call?.query.photo).toBe("https://example.test/photo.jpg");
   });
@@ -221,7 +235,9 @@ describe("e2e: photo URL workflow (#17)", () => {
 
 describe("e2e: DNS / unreachable hosts (#7)", () => {
   it("U-e2e-025: invalid DNS host -> network error result", async () => {
-    const { mcp, close } = await buildMcpClient("http://nonexistent.invalid.domain.example");
+    const { mcp, close } = await buildMcpClient(
+      "http://nonexistent.invalid.domain.example",
+    );
     try {
       const result = await mcp.callTool({ name: "plants_list", arguments: {} });
       expect(result.isError).toBe(true);

@@ -8,7 +8,7 @@ import { registerConfirmableRemove } from "./shared.js";
 export function registerPlantTools(
   server: McpServer,
   client: HortusFoxClient,
-  config: Config
+  config: Config,
 ): void {
   registerReads(server, client);
   if (config.enableWrites) {
@@ -29,12 +29,7 @@ function registerReads(server: McpServer, client: HortusFoxClient): void {
         .max(500)
         .optional()
         .describe("Max number of plants to return."),
-      from: z
-        .number()
-        .int()
-        .min(0)
-        .optional()
-        .describe("Pagination offset."),
+      from: z.number().int().min(0).optional().describe("Pagination offset."),
       sort: z
         .string()
         .optional()
@@ -43,7 +38,7 @@ function registerReads(server: McpServer, client: HortusFoxClient): void {
     async (args) => {
       const data = await client.get("/plants/list", args);
       return jsonResult(data);
-    }
+    },
   );
 
   server.tool(
@@ -56,22 +51,19 @@ function registerReads(server: McpServer, client: HortusFoxClient): void {
     async (args) => {
       const data = await client.get("/plants/search", args);
       return jsonResult(data);
-    }
+    },
   );
 
   server.tool(
     "plants_get",
     "Get full details for a single plant, including custom attributes.",
     {
-      plant: z
-        .string()
-        .or(z.number().int().positive())
-        .describe("Plant id."),
+      plant: z.string().or(z.number().int().positive()).describe("Plant id."),
     },
     async (args) => {
       const data = await client.get("/plants/get", { plant: args.plant });
       return jsonResult(data);
-    }
+    },
   );
 
   server.tool(
@@ -90,7 +82,7 @@ function registerReads(server: McpServer, client: HortusFoxClient): void {
     async (args) => {
       const data = await client.get("/plants/log/fetch", args);
       return jsonResult(data);
-    }
+    },
   );
 
   server.tool(
@@ -100,16 +92,15 @@ function registerReads(server: McpServer, client: HortusFoxClient): void {
       plant: z.string().or(z.number().int().positive()),
     },
     async (args) => {
-      const data = await client.get("/plants/gallery/list", { plant: args.plant });
+      const data = await client.get("/plants/gallery/list", {
+        plant: args.plant,
+      });
       return jsonResult(data);
-    }
+    },
   );
 }
 
-function registerWrites(
-  server: McpServer,
-  client: HortusFoxClient
-): void {
+function registerWrites(server: McpServer, client: HortusFoxClient): void {
   server.tool(
     "plants_add",
     "Add a new plant. Returns the new plant id.",
@@ -123,7 +114,7 @@ function registerWrites(
     async (args) => {
       const data = await client.get("/plants/add", args);
       return jsonResult(data);
-    }
+    },
   );
 
   server.tool(
@@ -134,13 +125,17 @@ function registerWrites(
       attribute: z
         .string()
         .min(1)
-        .describe("Column name to set (validated against allow-list server-side)."),
-      value: z.string().describe("New value. Use the literal '#null' to clear."),
+        .describe(
+          "Column name to set (validated against allow-list server-side).",
+        ),
+      value: z
+        .string()
+        .describe("New value. Use the literal '#null' to clear."),
     },
     async (args) => {
       const data = await client.get("/plants/update", args);
       return jsonResult(data);
-    }
+    },
   );
 
   registerConfirmableRemove(
@@ -155,7 +150,7 @@ function registerWrites(
     async (plant) => {
       const preview = await client.get("/plants/get", { plant });
       return preview;
-    }
+    },
   );
 
   server.tool(
@@ -163,10 +158,7 @@ function registerWrites(
     "Set the main photo for a plant. By default uses the URL path (external=1).",
     {
       plant: z.string().or(z.number().int().positive()),
-      photo: z
-        .string()
-        .url()
-        .describe("Absolute URL of the photo to use."),
+      photo: z.string().url().describe("Absolute URL of the photo to use."),
       external: z
         .boolean()
         .optional()
@@ -181,12 +173,12 @@ function registerWrites(
     async (args) => {
       if (args.external === false) {
         return errorResult(
-          "Multipart photo upload is not supported in v0.1. Use a photo URL (external=true)."
+          "Multipart photo upload is not supported in v0.1. Use a photo URL (external=true).",
         );
       }
       const data = await client.get("/plants/photo/update", args);
       return jsonResult(data);
-    }
+    },
   );
 
   server.tool(
@@ -205,12 +197,12 @@ function registerWrites(
     async (args) => {
       if (args.external === false) {
         return errorResult(
-          "Multipart photo upload is not supported in v0.1. Use a photo URL (external=true)."
+          "Multipart photo upload is not supported in v0.1. Use a photo URL (external=true).",
         );
       }
       const data = await client.get("/plants/gallery/add", args);
       return jsonResult(data);
-    }
+    },
   );
 
   server.tool(
@@ -218,13 +210,16 @@ function registerWrites(
     "Rename (edit label of) a gallery photo.",
     {
       plant: z.string().or(z.number().int().positive()),
-      item: z.string().or(z.number().int().positive()).describe("Gallery item id."),
+      item: z
+        .string()
+        .or(z.number().int().positive())
+        .describe("Gallery item id."),
       label: z.string().min(1).describe("New caption."),
     },
     async (args) => {
       const data = await client.get("/plants/gallery/edit", args);
       return jsonResult(data);
-    }
+    },
   );
 
   registerConfirmableRemove(
@@ -236,7 +231,7 @@ function registerWrites(
       const data = await client.get("/plants/gallery/remove", { item });
       return data;
     },
-    async () => ({ note: "Gallery photo will be permanently deleted." })
+    async () => ({ note: "Gallery photo will be permanently deleted." }),
   );
 
   server.tool(
@@ -251,7 +246,7 @@ function registerWrites(
     async (args) => {
       const data = await client.get("/plants/attributes/add", args);
       return jsonResult(data);
-    }
+    },
   );
 
   server.tool(
@@ -268,7 +263,7 @@ function registerWrites(
     async (args) => {
       const data = await client.get("/plants/attributes/edit", args);
       return jsonResult(data);
-    }
+    },
   );
 
   registerConfirmableRemove(
@@ -285,15 +280,17 @@ function registerWrites(
     },
     async (label, extra) => {
       const plant = extra?.plant;
-      if (plant === undefined) return { note: `Attribute "${label}" will be removed.` };
+      if (plant === undefined)
+        return { note: `Attribute "${label}" will be removed.` };
       const details = await client.get("/plants/get", { plant });
       return {
         plant,
         label,
-        current: (details as { data?: { custom?: unknown[] } }).data?.custom ?? [],
+        current:
+          (details as { data?: { custom?: unknown[] } }).data?.custom ?? [],
       };
     },
-    ["plant"]
+    ["plant"],
   );
 
   server.tool(
@@ -306,7 +303,7 @@ function registerWrites(
     async (args) => {
       const data = await client.get("/plants/log/add", args);
       return jsonResult(data);
-    }
+    },
   );
 
   server.tool(
@@ -319,7 +316,7 @@ function registerWrites(
     async (args) => {
       const data = await client.get("/plants/log/edit", args);
       return jsonResult(data);
-    }
+    },
   );
 
   registerConfirmableRemove(
@@ -331,6 +328,6 @@ function registerWrites(
       const data = await client.get("/plants/log/remove", { logid });
       return data;
     },
-    async () => ({ note: "Log entry will be permanently deleted." })
+    async () => ({ note: "Log entry will be permanently deleted." }),
   );
 }

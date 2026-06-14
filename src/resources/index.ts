@@ -4,7 +4,7 @@ import { registerPlantResources } from "./plants.js";
 
 export function registerAllResources(
   server: McpServer,
-  client: HortusFoxClient
+  client: HortusFoxClient,
 ): void {
   registerPlantResources(server, client);
   // Remaining domain resources wired here as they land.

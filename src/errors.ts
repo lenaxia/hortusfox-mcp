@@ -7,7 +7,7 @@ export class HortusFoxError extends Error {
       | "network"
       | "not_found"
       | "forbidden_op",
-    readonly detail?: unknown
+    readonly detail?: unknown,
   ) {
     super(message);
     this.name = "HortusFoxError";
@@ -19,7 +19,7 @@ export function authError(tokenOrPreview: string): HortusFoxError {
   return new HortusFoxError(
     `Invalid or disabled API token (sent: ${preview}). ` +
       `Regenerate one in HortusFox admin → API.`,
-    "auth"
+    "auth",
   );
 }
 
@@ -33,7 +33,7 @@ export function networkError(baseUrl: string, cause: unknown): HortusFoxError {
   return new HortusFoxError(
     `HortusFox unreachable at ${baseUrl}: ${cause instanceof Error ? cause.message : String(cause)}`,
     "network",
-    cause
+    cause,
   );
 }
 

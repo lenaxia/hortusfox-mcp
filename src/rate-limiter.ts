@@ -4,16 +4,16 @@ export class RateLimiter {
 
   constructor(
     private readonly capacity: number,
-    private readonly perSec: number
+    private readonly perSec: number,
   ) {
     if (!Number.isFinite(capacity) || capacity < 1) {
       throw new Error(
-        `RateLimiter capacity must be a positive finite number (got ${capacity})`
+        `RateLimiter capacity must be a positive finite number (got ${capacity})`,
       );
     }
     if (!Number.isFinite(perSec) || perSec < 1) {
       throw new Error(
-        `RateLimiter perSec must be a positive finite number (got ${perSec})`
+        `RateLimiter perSec must be a positive finite number (got ${perSec})`,
       );
     }
     this.tokens = capacity;
@@ -31,7 +31,7 @@ export class RateLimiter {
       await sleep(waitMs);
     }
     throw new Error(
-      `RateLimiter.acquire() exhausted after ${maxAttempts} attempts; capacity=${this.capacity}, perSec=${this.perSec}`
+      `RateLimiter.acquire() exhausted after ${maxAttempts} attempts; capacity=${this.capacity}, perSec=${this.perSec}`,
     );
   }
 

@@ -7,7 +7,7 @@ import { jsonResult } from "../result.js";
 export function registerChatTools(
   server: McpServer,
   client: HortusFoxClient,
-  config: Config
+  config: Config,
 ): void {
   server.tool(
     "chat_list",
@@ -18,7 +18,7 @@ export function registerChatTools(
     async (args) => {
       const data = await client.get("/chat/fetch", args);
       return jsonResult(data);
-    }
+    },
   );
 
   if (!config.enableWrites) return;
@@ -32,6 +32,6 @@ export function registerChatTools(
     async (args) => {
       const data = await client.get("/chat/message/add", args);
       return jsonResult(data);
-    }
+    },
   );
 }

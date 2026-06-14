@@ -24,9 +24,11 @@ describe("config / loadConfig", () => {
     vi.spyOn(console, "error").mockImplementation((...args: unknown[]) => {
       stderr.push(args.map(String).join(" "));
     });
-    const spy = vi.spyOn(process, "exit").mockImplementation((code?: number) => {
-      throw new Error(`EXIT_${code ?? 0}`);
-    });
+    const spy = vi
+      .spyOn(process, "exit")
+      .mockImplementation((code?: number) => {
+        throw new Error(`EXIT_${code ?? 0}`);
+      });
     return { spy, stderr };
   }
 
@@ -87,8 +89,16 @@ describe("config / loadConfig", () => {
   });
 
   it.each([
-    ["1", true], ["true", true], ["TRUE", true], ["yes", true], ["on", true],
-    ["0", false], ["false", false], ["no", false], ["", false], ["maybe", false],
+    ["1", true],
+    ["true", true],
+    ["TRUE", true],
+    ["yes", true],
+    ["on", true],
+    ["0", false],
+    ["false", false],
+    ["no", false],
+    ["", false],
+    ["maybe", false],
   ])("H-config-008: bool parsing of %s -> %s", (raw, expected) => {
     process.env.HORTUSFOX_BASE_URL = "http://x";
     process.env.HORTUSFOX_API_TOKEN = "tok";
@@ -97,8 +107,13 @@ describe("config / loadConfig", () => {
   });
 
   it.each([
-    ["abc", 10], ["-5", 10], ["0", 10], ["Infinity", 10], ["", 10],
-    ["5", 5], ["  7 ", 7],
+    ["abc", 10],
+    ["-5", 10],
+    ["0", 10],
+    ["Infinity", 10],
+    ["", 10],
+    ["5", 5],
+    ["  7 ", 7],
   ])("E-config-009/010: int parsing of %r -> %v", (raw, expected) => {
     process.env.HORTUSFOX_BASE_URL = "http://x";
     process.env.HORTUSFOX_API_TOKEN = "tok";

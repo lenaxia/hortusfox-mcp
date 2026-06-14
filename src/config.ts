@@ -13,7 +13,7 @@ function required(name: string): string {
   if (!v || v.trim() === "") {
     console.error(
       `hortusfox-mcp: missing required env var ${name}. ` +
-        `Set it in your MCP client config.`
+        `Set it in your MCP client config.`,
     );
     process.exit(1);
   }
@@ -38,7 +38,7 @@ export function loadConfig(): Config {
   baseUrl = baseUrl.replace(/\/+$/, "");
   if (!/^https?:\/\//i.test(baseUrl)) {
     console.error(
-      `hortusfox-mcp: HORTUSFOX_BASE_URL must include http(s):// (got "${baseUrl}")`
+      `hortusfox-mcp: HORTUSFOX_BASE_URL must include http(s):// (got "${baseUrl}")`,
     );
     process.exit(1);
   }

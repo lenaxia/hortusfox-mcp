@@ -6,15 +6,20 @@ import { expectMcpError } from "../helpers/matchers.js";
 async function callExpectingError(
   mcp: Awaited<ReturnType<typeof startServer>>["mcp"],
   name: string,
-  arguments_: Record<string, unknown>
+  arguments_: Record<string, unknown>,
 ): Promise<McpToolResultShape> {
   try {
-    const r = (await mcp.callTool({ name, arguments: arguments_ })) as McpToolResultShape;
+    const r = (await mcp.callTool({
+      name,
+      arguments: arguments_,
+    })) as McpToolResultShape;
     return r;
   } catch (e) {
     return {
       isError: true,
-      content: [{ type: "text", text: e instanceof Error ? e.message : String(e) }],
+      content: [
+        { type: "text", text: e instanceof Error ? e.message : String(e) },
+      ],
     };
   }
 }
@@ -31,7 +36,7 @@ interface Call {
 
 function bodyText(result: { content: unknown[] }): string {
   const entry = result.content.find(
-    (c) => (c as { type: string }).type === "text"
+    (c) => (c as { type: string }).type === "text",
   ) as { text?: string } | undefined;
   return entry?.text ?? "";
 }
@@ -50,10 +55,16 @@ describe("plants tools (integration)", () => {
 
   describe("read tools", () => {
     it("H-int-001: plants_list default returns list, no params besides token", async () => {
-      fetcher.setDefault({ status: 200, body: { code: 200, list: [{ id: 1 }] } });
+      fetcher.setDefault({
+        status: 200,
+        body: { code: 200, list: [{ id: 1 }] },
+      });
       const { mcp, close } = await startServer();
       try {
-        const result = await mcp.callTool({ name: "plants_list", arguments: {} });
+        const result = await mcp.callTool({
+          name: "plants_list",
+          arguments: {},
+        });
         const { path, query } = parseUrl(fetcher.calls[0].url);
         expect(path).toBe("/api/plants/list");
         expect(query.has("location")).toBe(false);
@@ -166,7 +177,10 @@ describe("plants tools (integration)", () => {
     });
 
     it("H-int-009: plants_gallery_list forwards plant", async () => {
-      fetcher.setDefault({ status: 200, body: { code: 200, data: { gallery: [] } } });
+      fetcher.setDefault({
+        status: 200,
+        body: { code: 200, data: { gallery: [] } },
+      });
       const { mcp, close } = await startServer();
       try {
         await mcp.callTool({
@@ -284,7 +298,9 @@ describe("plants tools (integration)", () => {
     it("U-int-016: plants_photo_set rejects missing photo", async () => {
       const { mcp, close } = await startServer();
       try {
-        const r = await callExpectingError(mcp, "plants_photo_set", { plant: 1 });
+        const r = await callExpectingError(mcp, "plants_photo_set", {
+          plant: 1,
+        });
         expectMcpError(r);
       } finally {
         await close();
@@ -480,12 +496,16 @@ describe("plants tools (integration)", () => {
           try {
             const result = await mcp.callTool({
               name: tc.name,
-              arguments: { [tc.idParam]: tc.idValue, confirm: false, ...tc.extraArgs },
+              arguments: {
+                [tc.idParam]: tc.idValue,
+                confirm: false,
+                ...tc.extraArgs,
+              },
             });
             const text = bodyText(result);
             expect(text.startsWith("Not deleted.")).toBe(true);
             const deleteCalls = fetcher.calls.filter((c) =>
-              c.url.includes(tc.endpoint)
+              c.url.includes(tc.endpoint),
             );
             expect(deleteCalls).toHaveLength(0);
           } finally {
@@ -499,10 +519,14 @@ describe("plants tools (integration)", () => {
           try {
             await mcp.callTool({
               name: tc.name,
-              arguments: { [tc.idParam]: tc.idValue, confirm: true, ...tc.extraArgs },
+              arguments: {
+                [tc.idParam]: tc.idValue,
+                confirm: true,
+                ...tc.extraArgs,
+              },
             });
             const deleteCalls = fetcher.calls.filter((c) =>
-              c.url.includes(tc.endpoint)
+              c.url.includes(tc.endpoint),
             );
             expect(deleteCalls).toHaveLength(1);
             const { query } = parseUrl(deleteCalls[0].url);
@@ -521,7 +545,11 @@ describe("plants tools (integration)", () => {
           try {
             const result = await mcp.callTool({
               name: tc.name,
-              arguments: { [tc.idParam]: tc.idValue, confirm: true, ...tc.extraArgs },
+              arguments: {
+                [tc.idParam]: tc.idValue,
+                confirm: true,
+                ...tc.extraArgs,
+              },
             });
             expect(result.isError).toBe(true);
             expect(bodyText(result)).toContain("not found");
@@ -544,7 +572,7 @@ describe("plants tools (integration)", () => {
           arguments: { plant: 1, confirm: false },
         });
         const getCalls = fetcher.calls.filter((c) =>
-          c.url.includes("/plants/get")
+          c.url.includes("/plants/get"),
         );
         expect(getCalls).toHaveLength(1);
       } finally {

@@ -4,11 +4,11 @@ import { jsonResult, textResult } from "../result.js";
 
 export type RemoveHandler = (
   id: string | number,
-  extra?: Record<string, unknown>
+  extra?: Record<string, unknown>,
 ) => Promise<Record<string, unknown>>;
 export type PreviewHandler = (
   id: string | number,
-  extra?: Record<string, unknown>
+  extra?: Record<string, unknown>,
 ) => Promise<Record<string, unknown>>;
 
 export function registerConfirmableRemove(
@@ -18,7 +18,7 @@ export function registerConfirmableRemove(
   idParam: string,
   doRemove: RemoveHandler,
   doPreview: PreviewHandler,
-  extraParams: string[] = []
+  extraParams: string[] = [],
 ): void {
   const baseShape: Record<string, z.ZodTypeAny> = {
     [idParam]: z.string().or(z.number().int().positive()),
@@ -26,7 +26,9 @@ export function registerConfirmableRemove(
       .boolean()
       .optional()
       .default(false)
-      .describe("Set to true to actually delete. Omit/false returns a preview."),
+      .describe(
+        "Set to true to actually delete. Omit/false returns a preview.",
+      ),
   };
   for (const p of extraParams) {
     baseShape[p] = z.string().or(z.number().int().positive());
@@ -43,7 +45,7 @@ export function registerConfirmableRemove(
       const preview = await doPreview(id, extra);
       return textResult(
         "Not deleted. Re-call with confirm=true to proceed.\n\n" +
-          JSON.stringify(preview, null, 2)
+          JSON.stringify(preview, null, 2),
       );
     }
     const result = await doRemove(id, extra);

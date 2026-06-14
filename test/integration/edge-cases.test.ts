@@ -10,14 +10,19 @@ interface McpToolResultShape {
 async function call(
   mcp: Awaited<ReturnType<typeof startServer>>["mcp"],
   name: string,
-  args: Record<string, unknown>
+  args: Record<string, unknown>,
 ): Promise<McpToolResultShape> {
   try {
-    return (await mcp.callTool({ name, arguments: args })) as McpToolResultShape;
+    return (await mcp.callTool({
+      name,
+      arguments: args,
+    })) as McpToolResultShape;
   } catch (e) {
     return {
       isError: true,
-      content: [{ type: "text", text: e instanceof Error ? e.message : String(e) }],
+      content: [
+        { type: "text", text: e instanceof Error ? e.message : String(e) },
+      ],
     };
   }
 }

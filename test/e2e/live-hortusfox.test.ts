@@ -8,7 +8,7 @@ const API_TOKEN = process.env.HORTUSFOX_API_TOKEN ?? "test-token";
 
 function parseText(result: { content: unknown[] }): string {
   const entry = result.content.find(
-    (c) => (c as { type: string }).type === "text"
+    (c) => (c as { type: string }).type === "text",
   ) as { text?: string } | undefined;
   return entry?.text ?? "";
 }
@@ -52,7 +52,9 @@ describe("live hortusfox integration", () => {
     const data = JSON.parse(parseText(result as { content: unknown[] }));
     expect(data.list).toBeInstanceOf(Array);
     expect(data.list.length).toBeGreaterThanOrEqual(2);
-    expect(data.list.map((l: { name: string }) => l.name)).toContain("Living Room");
+    expect(data.list.map((l: { name: string }) => l.name)).toContain(
+      "Living Room",
+    );
     expect(data.list.map((l: { name: string }) => l.name)).toContain("Balcony");
   });
 
@@ -151,7 +153,9 @@ describe("live hortusfox integration", () => {
       name: "tasks_add",
       arguments: { title: "Complete me" },
     });
-    const taskItem = JSON.parse(parseText(addResult as { content: unknown[] })).item;
+    const taskItem = JSON.parse(
+      parseText(addResult as { content: unknown[] }),
+    ).item;
 
     const result = await client.callTool({
       name: "tasks_complete",
@@ -165,7 +169,12 @@ describe("live hortusfox integration", () => {
   it("adds an inventory item", async () => {
     const result = await client.callTool({
       name: "inventory_add",
-      arguments: { name: "Fertilizer", amount: 3, location: 1, group: "general" },
+      arguments: {
+        name: "Fertilizer",
+        amount: 3,
+        location: 1,
+        group: "general",
+      },
     });
     const data = JSON.parse(parseText(result as { content: unknown[] }));
     expect(data.item).toBeGreaterThan(0);
@@ -187,7 +196,9 @@ describe("live hortusfox integration", () => {
       name: "inventory_add",
       arguments: { name: "Pots", amount: 5, location: 2, group: "supplies" },
     });
-    const itemId = JSON.parse(parseText(addResult as { content: unknown[] })).item;
+    const itemId = JSON.parse(
+      parseText(addResult as { content: unknown[] }),
+    ).item;
 
     const result = await client.callTool({
       name: "inventory_increment",

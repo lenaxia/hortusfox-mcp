@@ -4,7 +4,7 @@ import { HortusFoxClient } from "../client.js";
 
 export function registerPlantResources(
   server: McpServer,
-  client: HortusFoxClient
+  client: HortusFoxClient,
 ): void {
   server.resource(
     "plants",
@@ -13,7 +13,7 @@ export function registerPlantResources(
     async () => {
       const data = await client.get("/plants/list");
       return toResource("hortusfox://plants", data);
-    }
+    },
   );
 
   const plantTemplate = new ResourceTemplate("hortusfox://plants/{id}", {
@@ -22,11 +22,14 @@ export function registerPlantResources(
   server.resource(
     "plant",
     plantTemplate,
-    { mimeType: "application/json", description: "A single plant with attributes." },
+    {
+      mimeType: "application/json",
+      description: "A single plant with attributes.",
+    },
     async (uri, { id }) => {
       const data = await client.get("/plants/get", { plant: id });
       return toResource(uri.href, data);
-    }
+    },
   );
 
   const logTemplate = new ResourceTemplate("hortusfox://plants/{id}/log", {
@@ -39,21 +42,24 @@ export function registerPlantResources(
     async (uri, { id }) => {
       const data = await client.get("/plants/log/fetch", { plant: id });
       return toResource(uri.href, data);
-    }
+    },
   );
 
   const galleryTemplate = new ResourceTemplate(
     "hortusfox://plants/{id}/gallery",
-    { list: undefined }
+    { list: undefined },
   );
   server.resource(
     "plant-gallery",
     galleryTemplate,
-    { mimeType: "application/json", description: "Gallery photos for a plant." },
+    {
+      mimeType: "application/json",
+      description: "Gallery photos for a plant.",
+    },
     async (uri, { id }) => {
       const data = await client.get("/plants/gallery/list", { plant: id });
       return toResource(uri.href, data);
-    }
+    },
   );
 }
 

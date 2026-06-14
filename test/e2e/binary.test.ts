@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { rmSync, existsSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { execSync } from "node:child_process";
 
 const ENV = {
@@ -64,108 +64,113 @@ function spawnBinary(): {
   };
 }
 
-describe("e2e: binary entry point", () => {
-  let cleanup: Array<() => void> = [];
+describe(
+  "e2e: binary entry point",
+  () => {
+    const cleanup: Array<() => void> = [];
 
-  beforeAll(() => {
-    ensureBuilt();
-  });
+    beforeAll(() => {
+      ensureBuilt();
+    });
 
-  afterAll(() => {
-    for (const fn of cleanup) fn();
-  });
+    afterAll(() => {
+      for (const fn of cleanup) fn();
+    });
 
-  it("H-bin-001: binary completes MCP initialize handshake", async () => {
-    const session = spawnBinary();
-    cleanup.push(session.close);
-    session.send({
-      jsonrpc: "2.0",
-      id: 1,
-      method: "initialize",
-      params: {
-        protocolVersion: "2024-11-05",
-        capabilities: {},
-        clientInfo: { name: "binary-test", version: "0.0.1" },
-      },
-    });
-    const res = await session.nextResponse();
-    expect(res.result).toMatchObject({
-      serverInfo: { name: "hortusfox", version: "0.1.0" },
-    });
-  }, 15_000);
+    it("H-bin-001: binary completes MCP initialize handshake", async () => {
+      const session = spawnBinary();
+      cleanup.push(session.close);
+      session.send({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2024-11-05",
+          capabilities: {},
+          clientInfo: { name: "binary-test", version: "0.0.1" },
+        },
+      });
+      const res = await session.nextResponse();
+      expect(res.result).toMatchObject({
+        serverInfo: { name: "hortusfox", version: "0.1.0" },
+      });
+    }, 15_000);
 
-  it("H-bin-002: binary exposes 37 tools after initialized notification", async () => {
-    const session = spawnBinary();
-    cleanup.push(session.close);
-    session.send({
-      jsonrpc: "2.0",
-      id: 1,
-      method: "initialize",
-      params: {
-        protocolVersion: "2024-11-05",
-        capabilities: {},
-        clientInfo: { name: "binary-test", version: "0.0.1" },
-      },
-    });
-    await session.nextResponse();
-    session.send({ jsonrpc: "2.0", method: "notifications/initialized" });
-    session.send({ jsonrpc: "2.0", id: 2, method: "tools/list" });
-    const res = await session.nextResponse();
-    const tools = (res.result as { tools: Array<{ name: string }> }).tools;
-    expect(tools).toHaveLength(37);
-    expect(tools.map((t) => t.name)).toContain("plants_list");
-  }, 15_000);
+    it("H-bin-002: binary exposes 37 tools after initialized notification", async () => {
+      const session = spawnBinary();
+      cleanup.push(session.close);
+      session.send({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2024-11-05",
+          capabilities: {},
+          clientInfo: { name: "binary-test", version: "0.0.1" },
+        },
+      });
+      await session.nextResponse();
+      session.send({ jsonrpc: "2.0", method: "notifications/initialized" });
+      session.send({ jsonrpc: "2.0", id: 2, method: "tools/list" });
+      const res = await session.nextResponse();
+      const tools = (res.result as { tools: Array<{ name: string }> }).tools;
+      expect(tools).toHaveLength(37);
+      expect(tools.map((t) => t.name)).toContain("plants_list");
+    }, 15_000);
 
-  it("U-bin-003: binary exits 1 when HORTUSFOX_BASE_URL missing", async () => {
-    const child = spawn("node", ["dist/index.js"], {
-      env: {
-        ...process.env,
-        HORTUSFOX_BASE_URL: "",
-        HORTUSFOX_API_TOKEN: "x",
-      },
-      stdio: ["pipe", "pipe", "inherit"],
-    });
-    const code = await new Promise<number | null>((resolve) => {
-      child.on("close", resolve);
-    });
-    expect(code).toBe(1);
-  }, 10_000);
+    it("U-bin-003: binary exits 1 when HORTUSFOX_BASE_URL missing", async () => {
+      const child = spawn("node", ["dist/index.js"], {
+        env: {
+          ...process.env,
+          HORTUSFOX_BASE_URL: "",
+          HORTUSFOX_API_TOKEN: "x",
+        },
+        stdio: ["pipe", "pipe", "inherit"],
+      });
+      const code = await new Promise<number | null>((resolve) => {
+        child.on("close", resolve);
+      });
+      expect(code).toBe(1);
+    }, 10_000);
 
-  it("U-bin-004: binary exits 1 when HORTUSFOX_API_TOKEN missing", async () => {
-    const child = spawn("node", ["dist/index.js"], {
-      env: {
-        ...process.env,
-        HORTUSFOX_BASE_URL: "http://localhost",
-        HORTUSFOX_API_TOKEN: "",
-      },
-      stdio: ["pipe", "pipe", "inherit"],
-    });
-    const code = await new Promise<number | null>((resolve) => {
-      child.on("close", resolve);
-    });
-    expect(code).toBe(1);
-  }, 10_000);
+    it("U-bin-004: binary exits 1 when HORTUSFOX_API_TOKEN missing", async () => {
+      const child = spawn("node", ["dist/index.js"], {
+        env: {
+          ...process.env,
+          HORTUSFOX_BASE_URL: "http://localhost",
+          HORTUSFOX_API_TOKEN: "",
+        },
+        stdio: ["pipe", "pipe", "inherit"],
+      });
+      const code = await new Promise<number | null>((resolve) => {
+        child.on("close", resolve);
+      });
+      expect(code).toBe(1);
+    }, 10_000);
 
-  it("H-bin-005: binary shuts down cleanly on SIGTERM", async () => {
-    const session = spawnBinary();
-    session.send({
-      jsonrpc: "2.0",
-      id: 1,
-      method: "initialize",
-      params: {
-        protocolVersion: "2024-11-05",
-        capabilities: {},
-        clientInfo: { name: "binary-test", version: "0.0.1" },
-      },
-    });
-    await session.nextResponse();
-    const outcome = await new Promise<{ code: number | null; signal: NodeJS.Signals | null }>(
-      (resolve) => {
+    it("H-bin-005: binary shuts down cleanly on SIGTERM", async () => {
+      const session = spawnBinary();
+      session.send({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2024-11-05",
+          capabilities: {},
+          clientInfo: { name: "binary-test", version: "0.0.1" },
+        },
+      });
+      await session.nextResponse();
+      const outcome = await new Promise<{
+        code: number | null;
+        signal: NodeJS.Signals | null;
+      }>((resolve) => {
         session.child.on("close", (code, signal) => resolve({ code, signal }));
         session.child.kill("SIGTERM");
-      }
-    );
-    expect(outcome.signal ?? outcome.code).not.toBe(null);
-    session.child.stdin?.destroy();
-  }, 10_000);
-}, { timeout: 60_000 });
+      });
+      expect(outcome.signal ?? outcome.code).not.toBe(null);
+      session.child.stdin?.destroy();
+    }, 10_000);
+  },
+  { timeout: 60_000 },
+);

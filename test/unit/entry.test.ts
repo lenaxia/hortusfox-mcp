@@ -19,7 +19,9 @@ function validConfig(overrides: Partial<Config> = {}): Config {
   };
 }
 
-async function driveHandshake(server: ReturnType<typeof createServer>["server"]) {
+async function driveHandshake(
+  server: ReturnType<typeof createServer>["server"],
+) {
   const [a, b] = InMemoryTransport.createLinkedPair();
   await server.connect(a);
   const client = new Client({ name: "t", version: "0.0.0" });
@@ -69,7 +71,10 @@ describe("entry / createServer", () => {
     const { server } = createServer(validConfig());
     const client = await driveHandshake(server);
     try {
-      const result = await client.callTool({ name: "plants_list", arguments: {} });
+      const result = await client.callTool({
+        name: "plants_list",
+        arguments: {},
+      });
       expect(result.isError).toBeFalsy();
     } finally {
       await client.close();

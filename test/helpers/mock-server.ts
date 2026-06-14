@@ -1,8 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import {
-  InMemoryTransport,
-} from "@modelcontextprotocol/sdk/inMemory.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import type { Config } from "../../src/config.js";
 import { HortusFoxClient } from "../../src/client.js";
 import { registerAllResources } from "../../src/resources/index.js";
@@ -16,7 +14,7 @@ export interface TestServer {
 }
 
 export async function startServer(
-  configOverrides: Partial<Config> = {}
+  configOverrides: Partial<Config> = {},
 ): Promise<TestServer> {
   const config: Config = {
     baseUrl: "http://mock.test",
@@ -33,7 +31,8 @@ export async function startServer(
   registerAllResources(server, hortusfox);
   registerAllTools(server, hortusfox, config);
 
-  const [serverTransport, clientTransport] = InMemoryTransport.createLinkedPair();
+  const [serverTransport, clientTransport] =
+    InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
 
   const mcp = new Client({ name: "test-client", version: "0.0.0" });

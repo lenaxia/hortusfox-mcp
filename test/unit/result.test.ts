@@ -6,7 +6,9 @@ describe("result helpers", () => {
     const r = jsonResult({ a: 1 });
     expect(r.content).toHaveLength(1);
     expect(r.content[0]).toMatchObject({ type: "text" });
-    expect(JSON.parse((r.content[0] as { text: string }).text)).toEqual({ a: 1 });
+    expect(JSON.parse((r.content[0] as { text: string }).text)).toEqual({
+      a: 1,
+    });
     expect(r.isError).toBeFalsy();
   });
 

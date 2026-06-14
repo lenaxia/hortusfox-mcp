@@ -5,7 +5,7 @@ import { mockFetch, parseUrl } from "../helpers/mock-fetch.js";
 function bodyText(result: { contents?: unknown[] }): string {
   const contents = result.contents ?? [];
   const entry = contents.find(
-    (c) => (c as { mimeType?: string }).mimeType === "application/json"
+    (c) => (c as { mimeType?: string }).mimeType === "application/json",
   ) as { text?: string } | undefined;
   return entry?.text ?? "";
 }
@@ -41,7 +41,7 @@ describe("plants resources (integration)", () => {
           "hortusfox://plants/{id}",
           "hortusfox://plants/{id}/log",
           "hortusfox://plants/{id}/gallery",
-        ])
+        ]),
       );
     } finally {
       await close();
@@ -105,7 +105,7 @@ describe("plants resources (integration)", () => {
     const { mcp, close } = await startServer();
     try {
       await expect(
-        mcp.readResource({ uri: "hortusfox://nonexistent" })
+        mcp.readResource({ uri: "hortusfox://nonexistent" }),
       ).rejects.toThrow();
     } finally {
       await close();

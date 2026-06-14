@@ -1,4 +1,4 @@
-import { afterEach, vi } from "vitest";
+import { afterEach } from "vitest";
 
 export function withCleanEnv(stash: NodeJS.ProcessEnv) {
   afterEach(() => {

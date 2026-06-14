@@ -5,7 +5,7 @@ import { errorResult, jsonResult } from "../result.js";
 
 export function registerBackupTools(
   server: McpServer,
-  client: HortusFoxClient
+  client: HortusFoxClient,
 ): void {
   server.tool(
     "backup_export",
@@ -21,7 +21,7 @@ export function registerBackupTools(
     async (args) => {
       const data = await client.get("/backup/export", args);
       return jsonResult(data);
-    }
+    },
   );
 
   server.tool(
@@ -31,7 +31,9 @@ export function registerBackupTools(
     {
       confirm: z
         .boolean()
-        .describe('Must be true to proceed. Set to the literal boolean true, not the string "true".'),
+        .describe(
+          'Must be true to proceed. Set to the literal boolean true, not the string "true".',
+        ),
       locations: z.boolean().optional().default(false),
       plants: z.boolean().optional().default(false),
       gallery: z.boolean().optional().default(false),
@@ -43,12 +45,16 @@ export function registerBackupTools(
       if (!args.confirm) {
         return errorResult(
           "backup_import is destructive and requires confirm=true. " +
-            "Re-call with confirm=true and the data types you want to overwrite."
+            "Re-call with confirm=true and the data types you want to overwrite.",
         );
       }
-      const { confirm: _omit, ...params } = args;
-      const data = await client.post("/backup/import", params, JSON.stringify(params));
+      const { confirm: _confirm, ...params } = args;
+      const data = await client.post(
+        "/backup/import",
+        params,
+        JSON.stringify(params),
+      );
       return jsonResult(data);
-    }
+    },
   );
 }

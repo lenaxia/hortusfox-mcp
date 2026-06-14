@@ -28,9 +28,9 @@ describe("sanity: in-memory server + mock fetch wiring", () => {
       expect(fetcher.calls).toHaveLength(1);
       const { path } = parseUrl(fetcher.calls[0].url);
       expect(path).toBe("/api/plants/list");
-      const text = (result.content as Array<{ type: string; text?: string }>).find(
-        (c) => c.type === "text"
-      )?.text;
+      const text = (
+        result.content as Array<{ type: string; text?: string }>
+      ).find((c) => c.type === "text")?.text;
       expect(JSON.parse(text ?? "{}")).toEqual({ list: [{ id: 7 }] });
     } finally {
       await close();

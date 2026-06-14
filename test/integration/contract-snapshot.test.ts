@@ -57,8 +57,7 @@ const EXPECTED_TOOLS_READ_ONLY = [
 ];
 
 describe("tool roster contract (snapshot)", () => {
-  let fetcher: ReturnType<typeof mockFetch>;
-  fetcher = mockFetch();
+  const fetcher = mockFetch();
   fetcher.install();
   afterAll(() => fetcher.restore());
 
@@ -114,15 +113,18 @@ describe("tool roster contract (snapshot)", () => {
           "tasks_remove",
           "inventory_remove",
           "calendar_remove",
-        ].sort()
+        ].sort(),
       );
       for (const t of removeTools) {
-        const props = (t.inputSchema as { properties: Record<string, unknown> }).properties;
+        const props = (t.inputSchema as { properties: Record<string, unknown> })
+          .properties;
         expect(props).toHaveProperty("confirm");
       }
       const nonRemoveTools = list.tools.filter((t) => !/_remove$/.test(t.name));
       for (const t of nonRemoveTools) {
-        const props = (t.inputSchema as { properties?: Record<string, unknown> }).properties;
+        const props = (
+          t.inputSchema as { properties?: Record<string, unknown> }
+        ).properties;
         if (props) {
           expect(props).not.toHaveProperty("confirm");
         }

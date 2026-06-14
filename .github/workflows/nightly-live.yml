@@ -1,0 +1,145 @@
+name: Nightly Live Test
+
+# Spins up a real HortusFox instance (PHP built-in server + MariaDB),
+# seeds it with test data, and runs the live integration test suite
+# against it. Validates that the MCP server works against the actual
+# upstream API — catching regressions that mock-based tests cannot.
+
+on:
+  schedule:
+    # 06:00 UTC daily (10pm PST)
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+env:
+  PHP_VERSION: "8.3"
+  NODE_VERSION: "22"
+
+jobs:
+  live-test:
+    name: Live HortusFox Integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: ""
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "yes"
+          MARIADB_DATABASE: hortusfox
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mariadb-admin ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout MCP server
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo_mysql, mbstring, gd, intl, zip, bcmath, curl, xml
+          coverage: none
+
+      - name: Install MCP dependencies
+        run: npm ci
+
+      - name: Build MCP server
+        run: npm run build
+
+      - name: Clone HortusFox
+        uses: actions/checkout@v4
+        with:
+          repository: danielbrendel/hortusfox-web
+          path: hortusfox-web
+
+      - name: Configure HortusFox
+        working-directory: hortusfox-web
+        run: |
+          cp .env.example .env
+          # Point at the MariaDB service container
+          sed -i 's/DB_HOST=localhost/DB_HOST=127.0.0.1/' .env
+          sed -i 's/DB_PASSWORD=""/DB_PASSWORD=""/' .env
+          # Enable debug mode (required for asatru CLI)
+          sed -i 's/APP_DEBUG=true/APP_DEBUG=true/' .env
+
+      - name: Install Composer dependencies
+        working-directory: hortusfox-web
+        run: |
+          curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+          composer install --no-interaction --no-progress
+
+      - name: Run migrations
+        working-directory: hortusfox-web
+        run: php asatru migrate:fresh
+
+      - name: Seed default data
+        working-directory: hortusfox-web
+        run: |
+          php asatru plants:attributes 2>&1 || true
+          php asatru calendar:classes 2>&1 || true
+
+      - name: Seed test data (admin, API token, locations, inventory groups)
+        working-directory: hortusfox-web
+        env:
+          DB_HOST: 127.0.0.1
+          DB_USER: root
+          DB_DATABASE: hortusfox
+        run: |
+          PASS_HASH=$(php -r 'echo password_hash("test123", PASSWORD_BCRYPT);')
+          API_TOKEN=$(php -r 'echo md5(random_bytes(55) . date("Y-m-d H:i:s"));')
+          echo "API_TOKEN=$API_TOKEN" >> "$GITHUB_ENV"
+
+          mysql -h 127.0.0.1 -u root hortusfox <<SQL
+          INSERT INTO AppModel (workspace, language, timezone) VALUES ('CI Test Workspace', 'en', 'UTC');
+          INSERT INTO UserModel (name, email, password, admin) VALUES ('Admin', 'admin@test.local', '${PASS_HASH}', 1);
+          INSERT INTO ApiModel (token, active) VALUES ('${API_TOKEN}', 1);
+          INSERT INTO LocationsModel (name, active) VALUES ('Living Room', 1);
+          INSERT INTO LocationsModel (name, active) VALUES ('Balcony', 1);
+          INSERT INTO InvGroupModel (token, label) VALUES ('general', 'General');
+          INSERT INTO InvGroupModel (token, label) VALUES ('supplies', 'Supplies');
+          SQL
+
+      - name: Start HortusFox web server
+        working-directory: hortusfox-web
+        run: |
+          php -S 127.0.0.1:8080 -t public public/index.php \
+            -d session.save_path=/tmp/php-sessions \
+            -d display_errors=0 \
+            -d display_startup_errors=0 &
+          mkdir -p /tmp/php-sessions
+          sleep 2
+
+          # Verify it's up
+          curl -sf "http://127.0.0.1:8080/api/locations/list?token=${API_TOKEN}" | jq -e '.code == 200'
+
+      - name: Run live integration tests
+        env:
+          HORTUSFOX_BASE_URL: http://127.0.0.1:8080
+          HORTUSFOX_API_TOKEN: ${{ env.API_TOKEN }}
+        run: npm run test:live
+
+      - name: Dump server log on failure
+        if: failure()
+        working-directory: hortusfox-web
+        run: |
+          echo "=== HortusFox PHP server output ==="
+          # The server runs in the background; its output goes to the job log.
+          # Check if there are any PHP error logs
+          cat app/logs/*.log 2>/dev/null || echo "(no log files)"
+
+      - name: Shutdown HortusFox
+        if: always()
+        run: pkill -f "php.*-S 127.0.0.1:8080" 2>/dev/null || true

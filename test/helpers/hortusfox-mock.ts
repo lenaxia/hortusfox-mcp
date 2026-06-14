@@ -1,16 +1,28 @@
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import {
+  createServer,
+  type IncomingMessage,
+  type Server,
+  type ServerResponse,
+} from "node:http";
 import { AddressInfo } from "node:net";
 
 export type RouteHandler = (
   req: IncomingMessage,
   res: ServerResponse,
-  ctx: { method: string; path: string; query: URLSearchParams; body: unknown }
-) => { status: number; body?: unknown } | Promise<{ status: number; body?: unknown }>;
+  ctx: { method: string; path: string; query: URLSearchParams; body: unknown },
+) =>
+  | { status: number; body?: unknown }
+  | Promise<{ status: number; body?: unknown }>;
 
 export interface MockHortusFox {
   url: string;
   close(): Promise<void>;
-  requests: Array<{ method: string; path: string; query: Record<string, string>; body: unknown }>;
+  requests: Array<{
+    method: string;
+    path: string;
+    query: Record<string, string>;
+    body: unknown;
+  }>;
   setState(state: Record<string, unknown>): void;
   state: Record<string, unknown>;
 }
@@ -23,7 +35,7 @@ interface StartOptions {
 
 export async function startMockHortusFox(
   routes: Record<string, RouteHandler>,
-  opts: StartOptions
+  opts: StartOptions,
 ): Promise<MockHortusFox> {
   const requests: MockHortusFox["requests"] = [];
   const state: Record<string, unknown> = {};
@@ -36,7 +48,11 @@ export async function startMockHortusFox(
     const bodyText = await readBody(req);
     let parsedBody: unknown = undefined;
     if (bodyText) {
-      try { parsedBody = JSON.parse(bodyText); } catch { parsedBody = bodyText; }
+      try {
+        parsedBody = JSON.parse(bodyText);
+      } catch {
+        parsedBody = bodyText;
+      }
     }
 
     requests.push({
@@ -49,7 +65,10 @@ export async function startMockHortusFox(
     if (opts.latencyMs) await delay(opts.latencyMs);
 
     if (query.get("token") !== opts.token) {
-      sendJson(res, 403, { code: 403, invalid_token: query.get("token") ?? "" });
+      sendJson(res, 403, {
+        code: 403,
+        invalid_token: query.get("token") ?? "",
+      });
       return;
     }
 
@@ -60,18 +79,28 @@ export async function startMockHortusFox(
       return;
     }
     try {
-      const result = await handler(req, res, { method, path, query, body: parsedBody });
+      const result = await handler(req, res, {
+        method,
+        path,
+        query,
+        body: parsedBody,
+      });
       if (!res.writableEnded) {
         sendJson(res, result.status, result.body ?? { code: 200 });
       }
     } catch (err) {
       if (!res.writableEnded) {
-        sendJson(res, 500, { code: 500, msg: err instanceof Error ? err.message : String(err) });
+        sendJson(res, 500, {
+          code: 500,
+          msg: err instanceof Error ? err.message : String(err),
+        });
       }
     }
   });
 
-  await new Promise<void>((resolve) => server.listen(opts.port ?? 0, "127.0.0.1", resolve));
+  await new Promise<void>((resolve) =>
+    server.listen(opts.port ?? 0, "127.0.0.1", resolve),
+  );
   const addr = server.address() as AddressInfo;
   const url = `http://127.0.0.1:${addr.port}`;
 

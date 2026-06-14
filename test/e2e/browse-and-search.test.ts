@@ -11,7 +11,7 @@ const TOKEN = "real-token-1234567890";
 
 function bodyText(result: { content: unknown[] }): string {
   const entry = result.content.find(
-    (c) => (c as { type: string }).type === "text"
+    (c) => (c as { type: string }).type === "text",
   ) as { text?: string } | undefined;
   return entry?.text ?? "";
 }
@@ -58,7 +58,9 @@ describe("e2e: browse and search", () => {
             { id: 2, name: "Moon Cactus", location: 4 },
             { id: 3, name: "Pothos", location: 2 },
           ];
-          const list = loc ? all.filter((p) => String(p.location) === loc) : all;
+          const list = loc
+            ? all.filter((p) => String(p.location) === loc)
+            : all;
           return { status: 200, body: { code: 200, list } };
         },
         "GET /api/plants/search": (_r, _s, ctx) => {
@@ -66,7 +68,10 @@ describe("e2e: browse and search", () => {
           const all = [{ id: 1, name: "Desert Rose" }];
           return {
             status: 200,
-            body: { code: 200, list: all.filter((p) => p.name.toLowerCase().includes(expr)) },
+            body: {
+              code: 200,
+              list: all.filter((p) => p.name.toLowerCase().includes(expr)),
+            },
           };
         },
         "GET /api/plants/log/fetch": () => ({
@@ -74,7 +79,7 @@ describe("e2e: browse and search", () => {
           body: { code: 200, log: [{ id: 1, content: "watered" }] },
         }),
       },
-      { token: TOKEN }
+      { token: TOKEN },
     );
     const built = await buildMcpClient(mock.url);
     mcp = built.mcp;
@@ -101,21 +106,30 @@ describe("e2e: browse and search", () => {
       name: "plants_list",
       arguments: { location: "4" },
     });
-    const listCalls = mock.requests.filter((r) => r.path === "/api/plants/list");
+    const listCalls = mock.requests.filter(
+      (r) => r.path === "/api/plants/list",
+    );
     expect(listCalls.at(-1)?.query.location).toBe("4");
   });
 
   it("H-e2e-018: resources/read hortusfox://plants returns same shape as tool", async () => {
-    const toolResult = await mcp.callTool({ name: "plants_list", arguments: {} });
-    const resourceResult = await mcp.readResource({ uri: "hortusfox://plants" });
+    const toolResult = await mcp.callTool({
+      name: "plants_list",
+      arguments: {},
+    });
+    const resourceResult = await mcp.readResource({
+      uri: "hortusfox://plants",
+    });
     expect(JSON.parse(resourceText(resourceResult))).toEqual(
-      JSON.parse(bodyText(toolResult))
+      JSON.parse(bodyText(toolResult)),
     );
   });
 
   it("H-e2e-019: resources/read hortusfox://plants/3/log forwards plant=3", async () => {
     await mcp.readResource({ uri: "hortusfox://plants/3/log" });
-    const logCalls = mock.requests.filter((r) => r.path === "/api/plants/log/fetch");
+    const logCalls = mock.requests.filter(
+      (r) => r.path === "/api/plants/log/fetch",
+    );
     expect(logCalls.at(-1)?.query.plant).toBe("3");
   });
 
@@ -136,7 +150,7 @@ describe("e2e: browse and search", () => {
           return { status: 200, body: { code: 200, list: [] } };
         },
       },
-      { token: TOKEN }
+      { token: TOKEN },
     );
     const config = {
       baseUrl: throttledMock.url,
@@ -157,8 +171,8 @@ describe("e2e: browse and search", () => {
     try {
       await Promise.all(
         Array.from({ length: 12 }, () =>
-          client.callTool({ name: "plants_list", arguments: {} })
-        )
+          client.callTool({ name: "plants_list", arguments: {} }),
+        ),
       );
       expect(arrivalTimes).toHaveLength(12);
       const firstBatch = arrivalTimes.slice(0, 5);

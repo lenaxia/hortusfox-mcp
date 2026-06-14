@@ -1,8 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import {
-  InMemoryTransport,
-} from "@modelcontextprotocol/sdk/inMemory.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { HortusFoxClient } from "../../src/client.js";
 import { registerAllResources } from "../../src/resources/index.js";
@@ -35,7 +33,11 @@ function freshState(): MockState {
 
 function routes(state: MockState) {
   return {
-    "GET /api/plants/list": (_req: unknown, _res: unknown, ctx: { query: URLSearchParams }) => {
+    "GET /api/plants/list": (
+      _req: unknown,
+      _res: unknown,
+      ctx: { query: URLSearchParams },
+    ) => {
       const location = ctx.query.get("location");
       const list = location
         ? state.plants.filter((p) => String(p.location) === String(location))
@@ -45,17 +47,20 @@ function routes(state: MockState) {
     "GET /api/plants/get": (
       _req: unknown,
       _res: unknown,
-      ctx: { query: URLSearchParams }
+      ctx: { query: URLSearchParams },
     ) => {
       const id = Number(ctx.query.get("plant"));
       const plant = state.plants.find((p) => Number(p.id) === id);
       if (!plant) return { status: 200, body: { code: 500, msg: "not found" } };
-      return { status: 200, body: { code: 200, data: { default: plant, custom: [] } } };
+      return {
+        status: 200,
+        body: { code: 200, data: { default: plant, custom: [] } },
+      };
     },
     "GET /api/plants/add": (
       _req: unknown,
       _res: unknown,
-      ctx: { query: URLSearchParams }
+      ctx: { query: URLSearchParams },
     ) => {
       const name = ctx.query.get("name") ?? "unnamed";
       const location = Number(ctx.query.get("location") ?? 0);
@@ -66,7 +71,7 @@ function routes(state: MockState) {
     "GET /api/plants/update": (
       _req: unknown,
       _res: unknown,
-      ctx: { query: URLSearchParams }
+      ctx: { query: URLSearchParams },
     ) => {
       const id = Number(ctx.query.get("plant"));
       const attr = ctx.query.get("attribute") ?? "";
@@ -79,18 +84,19 @@ function routes(state: MockState) {
     "GET /api/plants/remove": (
       _req: unknown,
       _res: unknown,
-      ctx: { query: URLSearchParams }
+      ctx: { query: URLSearchParams },
     ) => {
       const id = Number(ctx.query.get("plant"));
       const idx = state.plants.findIndex((p) => Number(p.id) === id);
-      if (idx < 0) return { status: 200, body: { code: 500, msg: "not found" } };
+      if (idx < 0)
+        return { status: 200, body: { code: 500, msg: "not found" } };
       state.plants.splice(idx, 1);
       return { status: 200, body: { code: 200, plant: id } };
     },
     "GET /api/plants/log/add": (
       _req: unknown,
       _res: unknown,
-      ctx: { query: URLSearchParams }
+      ctx: { query: URLSearchParams },
     ) => {
       const plant = Number(ctx.query.get("plant"));
       const content = ctx.query.get("content") ?? "";
@@ -101,7 +107,7 @@ function routes(state: MockState) {
     "GET /api/plants/log/fetch": (
       _req: unknown,
       _res: unknown,
-      ctx: { query: URLSearchParams }
+      ctx: { query: URLSearchParams },
     ) => {
       const plant = Number(ctx.query.get("plant"));
       const logs = state.logs.filter((l) => Number(l.plant) === plant);
@@ -110,7 +116,7 @@ function routes(state: MockState) {
     "GET /api/plants/gallery/add": (
       _req: unknown,
       _res: unknown,
-      ctx: { query: URLSearchParams }
+      ctx: { query: URLSearchParams },
     ) => {
       const plant = Number(ctx.query.get("plant"));
       const label = ctx.query.get("label") ?? "";
@@ -121,7 +127,7 @@ function routes(state: MockState) {
     "GET /api/plants/gallery/list": (
       _req: unknown,
       _res: unknown,
-      ctx: { query: URLSearchParams }
+      ctx: { query: URLSearchParams },
     ) => {
       const plant = Number(ctx.query.get("plant"));
       const gallery = state.gallery.filter((g) => Number(g.plant) === plant);
@@ -130,11 +136,11 @@ function routes(state: MockState) {
     "GET /api/plants/search": (
       _req: unknown,
       _res: unknown,
-      ctx: { query: URLSearchParams }
+      ctx: { query: URLSearchParams },
     ) => {
       const expr = (ctx.query.get("expression") ?? "").toLowerCase();
       const matches = state.plants.filter((p) =>
-        String(p.name).toLowerCase().includes(expr)
+        String(p.name).toLowerCase().includes(expr),
       );
       return { status: 200, body: { code: 200, list: matches } };
     },
@@ -143,12 +149,15 @@ function routes(state: MockState) {
 
 function bodyText(result: { content: unknown[] }): string {
   const entry = result.content.find(
-    (c) => (c as { type: string }).type === "text"
+    (c) => (c as { type: string }).type === "text",
   ) as { text?: string } | undefined;
   return entry?.text ?? "";
 }
 
-async function buildMcpClient(baseUrl: string, overrides: Record<string, unknown> = {}) {
+async function buildMcpClient(
+  baseUrl: string,
+  overrides: Record<string, unknown> = {},
+) {
   const config = {
     baseUrl,
     apiToken: TOKEN,
@@ -194,7 +203,7 @@ describe("e2e: plant lifecycle", () => {
     const data = JSON.parse(bodyText(result));
     expect(data.list).toHaveLength(3);
     expect(data.list.map((p: { name: string }) => p.name)).toEqual(
-      expect.arrayContaining(["Monstera", "Pothos", "Snake plant"])
+      expect.arrayContaining(["Monstera", "Pothos", "Snake plant"]),
     );
   });
 
@@ -215,7 +224,10 @@ describe("e2e: plant lifecycle", () => {
     const newId = JSON.parse(bodyText(addResult)).plant;
     expect(newId).toBe(100);
 
-    const listResult = await mcp.callTool({ name: "plants_list", arguments: {} });
+    const listResult = await mcp.callTool({
+      name: "plants_list",
+      arguments: {},
+    });
     const list = JSON.parse(bodyText(listResult)).list as Array<{ id: number }>;
     expect(list.some((p) => p.id === 100)).toBe(true);
   });
@@ -223,7 +235,11 @@ describe("e2e: plant lifecycle", () => {
   it("W-e2e-004: update plant name and verify via get", async () => {
     await mcp.callTool({
       name: "plants_update_attribute",
-      arguments: { plant: 100, attribute: "name", value: "Pilea peperomioides" },
+      arguments: {
+        plant: 100,
+        attribute: "name",
+        value: "Pilea peperomioides",
+      },
     });
     const getResult = await mcp.callTool({
       name: "plants_get",
@@ -277,7 +293,7 @@ describe("e2e: plant lifecycle", () => {
     expect(bodyText(previewResult).startsWith("Not deleted.")).toBe(true);
 
     const removeCalls = mock.requests.filter(
-      (r) => r.path === "/api/plants/remove"
+      (r) => r.path === "/api/plants/remove",
     );
     expect(removeCalls).toHaveLength(0);
 
@@ -296,7 +312,7 @@ describe("e2e: plant lifecycle", () => {
     });
 
     const removeCalls = mock.requests.filter(
-      (r) => r.path === "/api/plants/remove"
+      (r) => r.path === "/api/plants/remove",
     );
     expect(removeCalls).toHaveLength(1);
     expect(removeCalls[0].query.plant).toBe("100");
@@ -312,7 +328,7 @@ describe("e2e: plant lifecycle", () => {
 
   it("W-e2e-009: every request carried the token query param", () => {
     const withoutToken = mock.requests.filter(
-      (r) => r.query.token !== TOKEN && r.path.startsWith("/api/")
+      (r) => r.query.token !== TOKEN && r.path.startsWith("/api/"),
     );
     expect(withoutToken).toEqual([]);
   });

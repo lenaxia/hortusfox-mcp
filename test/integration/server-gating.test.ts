@@ -97,7 +97,9 @@ describe("server gating (integration)", () => {
       } catch (e) {
         result = {
           isError: true,
-          content: [{ type: "text", text: e instanceof Error ? e.message : String(e) }],
+          content: [
+            { type: "text", text: e instanceof Error ? e.message : String(e) },
+          ],
         };
       }
       expectMcpError(result);

@@ -27,7 +27,7 @@ describe("resource URI edge cases (#14)", () => {
     const { mcp, close } = await startServer();
     try {
       await expect(
-        mcp.readResource({ uri: "hortusfox://plants/7/log/extra" })
+        mcp.readResource({ uri: "hortusfox://plants/7/log/extra" }),
       ).rejects.toThrow();
     } finally {
       await close();
@@ -50,7 +50,7 @@ describe("resource URI edge cases (#14)", () => {
     const { mcp, close } = await startServer();
     try {
       await expect(
-        mcp.readResource({ uri: "http://plants/7" })
+        mcp.readResource({ uri: "http://plants/7" }),
       ).rejects.toThrow();
     } finally {
       await close();
@@ -61,7 +61,7 @@ describe("resource URI edge cases (#14)", () => {
     const { mcp, close } = await startServer();
     try {
       await expect(
-        mcp.readResource({ uri: "hortusfox://plants/" })
+        mcp.readResource({ uri: "hortusfox://plants/" }),
       ).rejects.toThrow();
     } finally {
       await close();
@@ -72,7 +72,7 @@ describe("resource URI edge cases (#14)", () => {
     const { mcp, close } = await startServer();
     try {
       await expect(
-        mcp.readResource({ uri: "hortusfox://plants/-5" })
+        mcp.readResource({ uri: "hortusfox://plants/-5" }),
       ).rejects.toThrow();
     } finally {
       await close();

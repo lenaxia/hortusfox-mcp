@@ -91,7 +91,10 @@ describe("HortusFoxClient", () => {
 
   describe("response mapping", () => {
     it("H-cli-004: 200 with code:200 returns body minus code", async () => {
-      fetcher.setDefault({ status: 200, body: { code: 200, list: [{ id: 1 }] } });
+      fetcher.setDefault({
+        status: 200,
+        body: { code: 200, list: [{ id: 1 }] },
+      });
       const client = new HortusFoxClient(baseConfig());
       const data = await client.get("/plants/list");
       expect(data).toEqual({ list: [{ id: 1 }] });
@@ -117,7 +120,10 @@ describe("HortusFoxClient", () => {
 
   describe("error mapping", () => {
     it("U-cli-006: HTTP 403 -> auth error with token preview", async () => {
-      fetcher.setDefault({ status: 403, body: { code: 403, invalid_token: "x" } });
+      fetcher.setDefault({
+        status: 403,
+        body: { code: 403, invalid_token: "x" },
+      });
       const client = new HortusFoxClient(baseConfig());
       await expect(client.get("/x")).rejects.toMatchObject({
         kind: "auth",
@@ -145,7 +151,9 @@ describe("HortusFoxClient", () => {
 
     it("U-cli-010: fetch rejection -> network error", async () => {
       const client = new HortusFoxClient(baseConfig());
-      vi.spyOn(globalThis, "fetch").mockImplementation(() => Promise.reject(new TypeError("fetch failed")));
+      vi.spyOn(globalThis, "fetch").mockImplementation(() =>
+        Promise.reject(new TypeError("fetch failed")),
+      );
       await expect(client.get("/x")).rejects.toMatchObject({
         kind: "network",
         message: expect.stringContaining("fetch failed"),
@@ -155,17 +163,18 @@ describe("HortusFoxClient", () => {
     it("U-cli-011: timeout -> network error mentioning timed out + ms", async () => {
       vi.useFakeTimers();
       const client = new HortusFoxClient(
-        baseConfig({ timeoutMs: 50, maxRatePerSec: 1 })
+        baseConfig({ timeoutMs: 50, maxRatePerSec: 1 }),
       );
       vi.spyOn(globalThis, "fetch").mockImplementation(
-        (_input, init) => new Promise((_resolve, reject) => {
-          const signal = (init as RequestInit).signal;
-          signal?.addEventListener("abort", () => {
-            const e = new Error("The operation was aborted");
-            (e as Error & { name: string }).name = "AbortError";
-            reject(e);
-          });
-        })
+        (_input, init) =>
+          new Promise((_resolve, reject) => {
+            const signal = (init as RequestInit).signal;
+            signal?.addEventListener("abort", () => {
+              const e = new Error("The operation was aborted");
+              (e as Error & { name: string }).name = "AbortError";
+              reject(e);
+            });
+          }),
       );
       const p = client.get("/x");
       p.catch(() => {});
@@ -299,7 +308,7 @@ describe("HortusFoxClient", () => {
           new Response(JSON.stringify({ code: 200, ok: true }), {
             status: 200,
             headers: { "Content-Type": "application/json" },
-          })
+          }),
         )) as unknown as typeof fetch;
       globalThis.fetch = fakeFetch;
       try {
@@ -312,7 +321,10 @@ describe("HortusFoxClient", () => {
     });
 
     it("documented quirk: non-200 HTTP status with valid {code:200} body -> body code wins (success)", async () => {
-      fetcher.setDefault({ status: 500, body: { code: 200, msg: "lying body" } });
+      fetcher.setDefault({
+        status: 500,
+        body: { code: 200, msg: "lying body" },
+      });
       const client = new HortusFoxClient(baseConfig());
       const data = await client.get("/x");
       expect(data).toEqual({ msg: "lying body" });
@@ -321,7 +333,9 @@ describe("HortusFoxClient", () => {
     it("non-200 HTTP status with no code in body -> rejected as upstream error", async () => {
       fetcher.setDefault({ status: 500, body: { msg: "server error" } });
       const client = new HortusFoxClient(baseConfig());
-      await expect(client.get("/x")).rejects.toMatchObject({ kind: "upstream" });
+      await expect(client.get("/x")).rejects.toMatchObject({
+        kind: "upstream",
+      });
     });
   });
 
@@ -329,20 +343,18 @@ describe("HortusFoxClient", () => {
     it("aborts the in-flight fetch when timeout fires", async () => {
       vi.useFakeTimers();
       let abortSignal: AbortSignal | null = null;
-      vi.spyOn(globalThis, "fetch").mockImplementation(
-        (_input, init) => {
-          abortSignal = (init as RequestInit).signal ?? null;
-          return new Promise((_resolve, reject) => {
-            abortSignal?.addEventListener("abort", () => {
-              const e = new Error("aborted");
-              (e as Error & { name: string }).name = "AbortError";
-              reject(e);
-            });
+      vi.spyOn(globalThis, "fetch").mockImplementation((_input, init) => {
+        abortSignal = (init as RequestInit).signal ?? null;
+        return new Promise((_resolve, reject) => {
+          abortSignal?.addEventListener("abort", () => {
+            const e = new Error("aborted");
+            (e as Error & { name: string }).name = "AbortError";
+            reject(e);
           });
-        }
-      );
+        });
+      });
       const client = new HortusFoxClient(
-        baseConfig({ timeoutMs: 50, maxRatePerSec: 1 })
+        baseConfig({ timeoutMs: 50, maxRatePerSec: 1 }),
       );
       const p = client.get("/x");
       p.catch(() => {});

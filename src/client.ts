@@ -11,25 +11,25 @@ export class HortusFoxClient {
   private readonly limiter: RateLimiter;
 
   constructor(private readonly config: Config) {
-    this.limiter = new RateLimiter(
-      config.maxRatePerSec,
-      config.maxRatePerSec
-    );
+    this.limiter = new RateLimiter(config.maxRatePerSec, config.maxRatePerSec);
     if (!config.verifyTls) {
       setGlobalDispatcher(
-        new Agent({ connect: { rejectUnauthorized: false } })
+        new Agent({ connect: { rejectUnauthorized: false } }),
       );
     }
   }
 
-  async get(path: string, params?: Record<string, unknown>): Promise<ApiResponse> {
+  async get(
+    path: string,
+    params?: Record<string, unknown>,
+  ): Promise<ApiResponse> {
     return this.request("GET", path, params);
   }
 
   async post(
     path: string,
     params?: Record<string, unknown>,
-    body?: string
+    body?: string,
   ): Promise<ApiResponse> {
     return this.request("POST", path, params, body);
   }
@@ -38,29 +38,28 @@ export class HortusFoxClient {
     method: string,
     path: string,
     params?: Record<string, unknown>,
-    body?: string
+    body?: string,
   ): Promise<ApiResponse> {
     await this.limiter.acquire();
 
     const url = this.buildUrl(path, params);
     const controller = new AbortController();
-    const timer = setTimeout(
-      () => controller.abort(),
-      this.config.timeoutMs
-    );
+    const timer = setTimeout(() => controller.abort(), this.config.timeoutMs);
 
     let res: Response;
     try {
       res = await fetch(url, {
         method,
         signal: controller.signal,
-        ...(body !== undefined ? { body, headers: { "Content-Type": "application/json" } } : {}),
+        ...(body !== undefined
+          ? { body, headers: { "Content-Type": "application/json" } }
+          : {}),
       });
     } catch (cause) {
       if (controller.signal.aborted) {
         throw networkError(
           this.config.baseUrl,
-          new Error(`request timed out after ${this.config.timeoutMs}ms`)
+          new Error(`request timed out after ${this.config.timeoutMs}ms`),
         );
       }
       throw networkError(this.config.baseUrl, cause);
@@ -87,7 +86,7 @@ export class HortusFoxClient {
     const code = typeof bodyObj.code === "number" ? bodyObj.code : res.status;
 
     if (code === 200) {
-      const { code: _omit, ...rest } = bodyObj;
+      const { code: _code, ...rest } = bodyObj;
       return rest;
     }
 
@@ -115,6 +114,8 @@ export class HortusFoxClient {
 
   private tokenPreview(): string {
     const t = this.config.apiToken;
-    return t.length <= 8 ? `${t.slice(0, 2)}…` : `${t.slice(0, 4)}…${t.slice(-2)}`;
+    return t.length <= 8
+      ? `${t.slice(0, 2)}…`
+      : `${t.slice(0, 4)}…${t.slice(-2)}`;
   }
 }

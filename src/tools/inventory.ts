@@ -8,17 +8,12 @@ import { registerConfirmableRemove } from "./shared.js";
 export function registerInventoryTools(
   server: McpServer,
   client: HortusFoxClient,
-  config: Config
+  config: Config,
 ): void {
-  server.tool(
-    "inventory_list",
-    "List all inventory items.",
-    {},
-    async () => {
-      const data = await client.get("/inventory/fetch");
-      return jsonResult(data);
-    }
-  );
+  server.tool("inventory_list", "List all inventory items.", {}, async () => {
+    const data = await client.get("/inventory/fetch");
+    return jsonResult(data);
+  });
 
   if (!config.enableWrites) return;
 
@@ -36,14 +31,14 @@ export function registerInventoryTools(
         .string()
         .min(1)
         .describe(
-          "Inventory group token (must already exist in the workspace)."
+          "Inventory group token (must already exist in the workspace).",
         ),
       photo: z.string().url().optional().describe("Optional photo URL."),
     },
     async (args) => {
       const data = await client.get("/inventory/add", args);
       return jsonResult(data);
-    }
+    },
   );
 
   server.tool(
@@ -64,7 +59,7 @@ export function registerInventoryTools(
     async (args) => {
       const data = await client.get("/inventory/edit", args);
       return jsonResult(data);
-    }
+    },
   );
 
   server.tool(
@@ -76,7 +71,7 @@ export function registerInventoryTools(
     async (args) => {
       const data = await client.get("/inventory/amount/inc", args);
       return jsonResult(data);
-    }
+    },
   );
 
   server.tool(
@@ -88,7 +83,7 @@ export function registerInventoryTools(
     async (args) => {
       const data = await client.get("/inventory/amount/dec", args);
       return jsonResult(data);
-    }
+    },
   );
 
   registerConfirmableRemove(
@@ -100,6 +95,6 @@ export function registerInventoryTools(
       const data = await client.get("/inventory/remove", { item });
       return data;
     },
-    async () => ({ note: "Inventory item will be permanently deleted." })
+    async () => ({ note: "Inventory item will be permanently deleted." }),
   );
 }

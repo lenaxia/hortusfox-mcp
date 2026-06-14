@@ -1,0 +1,45 @@
+# gitleaks configuration for hortusfox-mcp.
+#
+# Extends the default ruleset (rules: jwt, generic-api-key, private-key,
+# curl-auth-header, etc. — see https://github.com/gitleaks/gitleaks for
+# the full list).
+#
+# We allow-list known-safe patterns rather than weakening the rules.
+
+title = "hortusfox-mcp gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known-safe paths and content. See per-entry rationale."
+
+paths = [
+  # Test files use synthetic tokens that are never valid against any
+  # real HortusFox instance. Verified by inspection.
+  '''test/.*\.ts''',
+  # package-lock.json contains resolved URLs and integrity hashes that
+  # can trigger the generic-api-key rule on hash substrings.
+  '''package-lock\.json''',
+]
+
+# Allow specific regex patterns in any file.
+regexes = [
+  # The test API token used in the live integration test — env-injected
+  # at runtime, the fallback default is never valid against any real instance.
+  '''test-token''',
+  # MCP server name used in test fixtures.
+  '''hortusfox-test''',
+]
+
+# Stop-words: matches that, when seen alongside a candidate secret,
+# disprove the match.
+stopwords = [
+  "example",
+  "placeholder",
+  "test",
+  "fake",
+  "dummy",
+  "redacted",
+  "mock",
+]

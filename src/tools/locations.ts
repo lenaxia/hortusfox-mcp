@@ -5,7 +5,7 @@ import { jsonResult } from "../result.js";
 
 export function registerLocationTools(
   server: McpServer,
-  client: HortusFoxClient
+  client: HortusFoxClient,
 ): void {
   server.tool(
     "locations_list",
@@ -25,7 +25,9 @@ export function registerLocationTools(
         .string()
         .optional()
         .default("id")
-        .describe("Comma-separated plant info columns to include when include_plants=true."),
+        .describe(
+          "Comma-separated plant info columns to include when include_plants=true.",
+        ),
       paginate: z
         .number()
         .int()
@@ -37,7 +39,7 @@ export function registerLocationTools(
     async (args) => {
       const data = await client.get("/locations/list", args);
       return jsonResult(data);
-    }
+    },
   );
 
   server.tool(
@@ -54,6 +56,6 @@ export function registerLocationTools(
     async (args) => {
       const data = await client.get("/locations/info", args);
       return jsonResult(data);
-    }
+    },
   );
 }
