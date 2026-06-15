@@ -19,9 +19,18 @@ export function registerPlantTools(
 function registerReads(server: McpServer, client: HortusFoxClient): void {
   server.tool(
     "plants_list",
-    "List plants, optionally filtered by location and paginated.",
+    // NOTE: location is required (not optional) as a workaround for upstream bug
+    // danielbrendel/hortusfox-web#532 — omitting location causes the API to
+    // silently return an empty list due to a PDO null-binding issue in
+    // PlantsModel::getPlantList(). Remove the workaround once the upstream fix
+    // is released.
+    // NOTE: sort is restricted to 'asc'|'desc' as a workaround for upstream bug
+    // danielbrendel/hortusfox-web#533 — any other value is concatenated raw into
+    // the SQL query, producing a syntax error. Remove the enum restriction once
+    // the upstream fix is released.
+    "List plants for a given location, paginated.",
     {
-      location: z.string().optional().describe("Location id to filter by."),
+      location: z.string().describe("Location id to filter by."),
       limit: z
         .number()
         .int()
@@ -31,9 +40,9 @@ function registerReads(server: McpServer, client: HortusFoxClient): void {
         .describe("Max number of plants to return."),
       from: z.number().int().min(0).optional().describe("Pagination offset."),
       sort: z
-        .string()
+        .enum(["asc", "desc"])
         .optional()
-        .describe("Sort order as expected by the upstream API."),
+        .describe("Sort order by id."),
     },
     async (args) => {
       const data = await client.get("/plants/list", args);
