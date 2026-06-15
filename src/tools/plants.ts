@@ -30,7 +30,7 @@ function registerReads(server: McpServer, client: HortusFoxClient): void {
     // the upstream fix is released.
     "List plants for a given location, paginated.",
     {
-      location: z.string().describe("Location id to filter by."),
+      location: z.number().int().positive().describe("Numeric location id to filter by (e.g. 1). Use locations_list to discover valid ids."),
       limit: z
         .number()
         .int()
