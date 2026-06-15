@@ -103,7 +103,27 @@ function registerReads(server: McpServer, client: HortusFoxClient): void {
 function registerWrites(server: McpServer, client: HortusFoxClient): void {
   server.tool(
     "plants_add",
-    "Add a new plant. Returns the new plant id.",
+    `Add a new plant. Returns the new plant id.
+
+IMPORTANT — photo workflow (always run after adding):
+After successfully adding the plant, immediately call plants_photo_set with a
+high-quality photo URL found using the following strategy (in order of preference):
+
+1. Wikimedia Commons (best quality, stable URLs, freely licensed):
+   Search https://commons.wikimedia.org/w/api.php?action=query&list=search&srnamespace=6&srsearch=<scientific_name>&format=json
+   Pick the first result whose title ends in .jpg or .png, then resolve to a
+   full-resolution URL via:
+   https://commons.wikimedia.org/w/api.php?action=query&titles=File:<filename>&prop=imageinfo&iiprop=url&format=json
+   Use the "url" field from imageinfo as the photo URL.
+
+2. If Wikimedia returns no usable result, fall back to a web image search using
+   the query "<scientific_name> plant high resolution" and select a direct .jpg
+   or .png URL from a reputable source (botanical garden, university, iNaturalist,
+   or Wikipedia infobox image).
+
+Always prefer the scientific name over the common name for photo searches.
+If scientific name is unknown, use "<common_name> plant".
+Log the source URL used so the user can verify or replace it later.`,
     {
       name: z.string().min(1).describe("Plant name."),
       location: z
