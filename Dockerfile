@@ -6,8 +6,9 @@
 # also has supergateway installed.
 #
 # The resulting image is designed to be wrapped by supergateway so that
-# the stdio MCP server is exposed as an SSE/HTTP endpoint on :8000.
-# The K8s HelmRelease supplies the `supergateway` command + args.
+# the stdio MCP server is exposed as a Streamable HTTP endpoint on :8000.
+# The K8s HelmRelease supplies the `supergateway` command + args
+# (--outputTransport streamableHttp) to support multiple concurrent clients.
 # ──────────────────────────────────────────────────────────────────────
 
 # ── Stage 1: Build ────────────────────────────────────────────────────
