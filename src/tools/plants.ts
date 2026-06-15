@@ -119,18 +119,18 @@ function registerWrites(server: McpServer, client: HortusFoxClient): void {
 
   server.tool(
     "plants_update_attribute",
-    "Update a single attribute on a plant. Pass value '#null' to clear it.",
+    "Update a single attribute on a plant. Pass value '#null' to clear it. NOTE: the 'cutting_month' attribute is zero-indexed (0=January, 1=February, ..., 11=December).",
     {
       plant: z.string().or(z.number().int().positive()),
       attribute: z
         .string()
         .min(1)
         .describe(
-          "Column name to set (validated against allow-list server-side).",
+          "Column name to set (validated against allow-list server-side). For 'cutting_month': use 0=January, 1=February, ..., 11=December.",
         ),
       value: z
         .string()
-        .describe("New value. Use the literal '#null' to clear."),
+        .describe("New value. Use the literal '#null' to clear. For 'cutting_month', provide a zero-indexed integer (0=January … 11=December)."),
     },
     async (args) => {
       const data = await client.get("/plants/update", args);
