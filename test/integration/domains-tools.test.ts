@@ -178,6 +178,7 @@ describe("domain tools (integration)", () => {
         expect(query.get("title")).toBe("Water plants");
         expect(query.get("description")).toBe("Morning routine");
         expect(JSON.parse(bodyText(result))).toEqual({ item: 42 });
+        expect(result.structuredContent).toEqual({ item: 42 });
       } finally {
         await close();
       }
@@ -330,6 +331,7 @@ describe("domain tools (integration)", () => {
         expect(query.get("name")).toBe("Fertilizer");
         expect(query.get("amount")).toBe("5");
         expect(JSON.parse(bodyText(result))).toEqual({ item: 3 });
+        expect(result.structuredContent).toEqual({ item: 3 });
       } finally {
         await close();
       }
@@ -417,6 +419,7 @@ describe("domain tools (integration)", () => {
         expect(path).toBe("/api/inventory/amount/inc");
         expect(query.get("item")).toBe("1");
         expect(JSON.parse(bodyText(result))).toEqual({ amount: 6 });
+        expect(result.structuredContent).toEqual({ amount: 6 });
       } finally {
         await close();
       }
@@ -426,12 +429,13 @@ describe("domain tools (integration)", () => {
       fetcher.setDefault({ status: 200, body: { code: 200, amount: 4 } });
       const { mcp, close } = await startServer();
       try {
-        await mcp.callTool({
+        const result = await mcp.callTool({
           name: "inventory_decrement",
           arguments: { item: 1 },
         });
         const { path } = parseUrl(lastCall(fetcher).url);
         expect(path).toBe("/api/inventory/amount/dec");
+        expect(result.structuredContent).toEqual({ amount: 4 });
       } finally {
         await close();
       }
@@ -514,6 +518,7 @@ describe("domain tools (integration)", () => {
         expect(query.get("name")).toBe("Repot day");
         expect(query.get("date_from")).toBe("2025-03-15");
         expect(JSON.parse(bodyText(result))).toEqual({ item: 7 });
+        expect(result.structuredContent).toEqual({ item: 7 });
       } finally {
         await close();
       }

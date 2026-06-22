@@ -210,6 +210,7 @@ describe("plants tools (integration)", () => {
         expect(query.get("name")).toBe("Monstera");
         expect(query.get("location")).toBe("2");
         expect(JSON.parse(bodyText(result))).toEqual({ plant: 99 });
+        expect(result.structuredContent).toEqual({ plant: 99 });
       } finally {
         await close();
       }
@@ -322,6 +323,7 @@ describe("plants tools (integration)", () => {
         const { path } = parseUrl(lastCall(fetcher).url);
         expect(path).toBe("/api/plants/gallery/add");
         expect(JSON.parse(bodyText(result))).toEqual({ item: 7 });
+        expect(result.structuredContent).toEqual({ item: 7 });
       } finally {
         await close();
       }
@@ -428,6 +430,7 @@ describe("plants tools (integration)", () => {
           arguments: { plant: 1, content: "Watered" },
         });
         expect(JSON.parse(bodyText(result))).toEqual({ logid: 5 });
+        expect(result.structuredContent).toEqual({ logid: 5 });
       } finally {
         await close();
       }

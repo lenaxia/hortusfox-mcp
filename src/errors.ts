@@ -1,12 +1,7 @@
 export class HortusFoxError extends Error {
   constructor(
     message: string,
-    readonly kind:
-      | "auth"
-      | "upstream"
-      | "network"
-      | "not_found"
-      | "forbidden_op",
+    readonly kind: "auth" | "upstream" | "network",
     readonly detail?: unknown,
   ) {
     super(message);

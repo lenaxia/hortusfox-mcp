@@ -2,7 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { Config } from "../config.js";
 import { HortusFoxClient } from "../client.js";
-import { errorResult, jsonResult } from "../result.js";
+import { errorResult, jsonResult, structuredResult } from "../result.js";
 import { registerConfirmableRemove } from "./shared.js";
 
 export function registerPlantTools(
@@ -101,19 +101,24 @@ function registerReads(server: McpServer, client: HortusFoxClient): void {
 }
 
 function registerWrites(server: McpServer, client: HortusFoxClient): void {
-  server.tool(
+  server.registerTool(
     "plants_add",
-    "Add a new plant. Returns the new plant id.",
     {
-      name: z.string().min(1).describe("Plant name."),
-      location: z
-        .string()
-        .or(z.number().int().positive())
-        .describe("Location id for the new plant."),
+      description: "Add a new plant. Returns the new plant id.",
+      inputSchema: {
+        name: z.string().min(1).describe("Plant name."),
+        location: z
+          .string()
+          .or(z.number().int().positive())
+          .describe("Location id for the new plant."),
+      },
+      outputSchema: {
+        plant: z.number().int().positive().describe("New plant id."),
+      },
     },
     async (args) => {
       const data = await client.get("/plants/add", args);
-      return jsonResult(data);
+      return structuredResult(data);
     },
   );
 
@@ -181,18 +186,23 @@ function registerWrites(server: McpServer, client: HortusFoxClient): void {
     },
   );
 
-  server.tool(
+  server.registerTool(
     "plants_gallery_add",
-    "Add a photo to a plant's gallery via URL.",
     {
-      plant: z.string().or(z.number().int().positive()),
-      label: z.string().min(1).describe("Caption for the gallery photo."),
-      photo: z.string().url().describe("Absolute URL of the photo."),
-      external: z
-        .boolean()
-        .optional()
-        .default(true)
-        .describe("Must stay true in v0.1 (multipart upload unsupported)."),
+      description: "Add a photo to a plant's gallery via URL.",
+      inputSchema: {
+        plant: z.string().or(z.number().int().positive()),
+        label: z.string().min(1).describe("Caption for the gallery photo."),
+        photo: z.string().url().describe("Absolute URL of the photo."),
+        external: z
+          .boolean()
+          .optional()
+          .default(true)
+          .describe("Must stay true in v0.1 (multipart upload unsupported)."),
+      },
+      outputSchema: {
+        item: z.number().int().positive().describe("New gallery item id."),
+      },
     },
     async (args) => {
       if (args.external === false) {
@@ -201,7 +211,7 @@ function registerWrites(server: McpServer, client: HortusFoxClient): void {
         );
       }
       const data = await client.get("/plants/gallery/add", args);
-      return jsonResult(data);
+      return structuredResult(data);
     },
   );
 
@@ -293,16 +303,21 @@ function registerWrites(server: McpServer, client: HortusFoxClient): void {
     ["plant"],
   );
 
-  server.tool(
+  server.registerTool(
     "plants_log_add",
-    "Add a log entry to a plant. Returns the new log id.",
     {
-      plant: z.string().or(z.number().int().positive()),
-      content: z.string().min(1),
+      description: "Add a log entry to a plant. Returns the new log id.",
+      inputSchema: {
+        plant: z.string().or(z.number().int().positive()),
+        content: z.string().min(1),
+      },
+      outputSchema: {
+        logid: z.number().int().positive().describe("New log entry id."),
+      },
     },
     async (args) => {
       const data = await client.get("/plants/log/add", args);
-      return jsonResult(data);
+      return structuredResult(data);
     },
   );
 
