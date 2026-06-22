@@ -24,7 +24,10 @@ describe("sanity: in-memory server + mock fetch wiring", () => {
     fetcher.setDefault({ status: 200, body: { code: 200, list: [{ id: 7 }] } });
     const { mcp, close } = await startServer();
     try {
-      const result = await mcp.callTool({ name: "plants_list", arguments: {} });
+      const result = await mcp.callTool({
+        name: "plants_list",
+        arguments: { location: 1 },
+      });
       expect(fetcher.calls).toHaveLength(1);
       const { path } = parseUrl(fetcher.calls[0].url);
       expect(path).toBe("/api/plants/list");

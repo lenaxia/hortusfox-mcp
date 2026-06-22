@@ -2,7 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { Config } from "../config.js";
 import { HortusFoxClient } from "../client.js";
-import { jsonResult } from "../result.js";
+import { jsonResult, structuredResult } from "../result.js";
 import { registerConfirmableRemove } from "./shared.js";
 
 const RECURRING_SCOPES = z
@@ -33,31 +33,37 @@ export function registerTaskTools(
 
   if (!config.enableWrites) return;
 
-  server.tool(
+  server.registerTool(
     "tasks_add",
-    "Add a new task. To make it recurring, supply both due_date and recurring_time.",
     {
-      title: z.string().min(1),
-      description: z.string().optional().default(""),
-      due_date: z
-        .string()
-        .optional()
-        .describe("ISO date (YYYY-MM-DD) the task is due."),
-      recurring_time: z
-        .number()
-        .int()
-        .positive()
-        .optional()
-        .describe(
-          "Quantity of recurrence (requires due_date + recurring_scope).",
-        ),
-      recurring_scope: RECURRING_SCOPES.optional().default("hours"),
-      plant: z
-        .number()
-        .int()
-        .positive()
-        .optional()
-        .describe("Optional plant id to associate the task with."),
+      description:
+        "Add a new task. To make it recurring, supply both due_date and recurring_time.",
+      inputSchema: {
+        title: z.string().min(1),
+        description: z.string().optional().default(""),
+        due_date: z
+          .string()
+          .optional()
+          .describe("ISO date (YYYY-MM-DD) the task is due."),
+        recurring_time: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe(
+            "Quantity of recurrence (requires due_date + recurring_scope).",
+          ),
+        recurring_scope: RECURRING_SCOPES.optional().default("hours"),
+        plant: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe("Optional plant id to associate the task with."),
+      },
+      outputSchema: {
+        item: z.number().int().positive().describe("New task id."),
+      },
     },
     async (args) => {
       const params: Record<string, unknown> = {
@@ -69,7 +75,7 @@ export function registerTaskTools(
       };
       if (args.plant !== undefined) params.plant = args.plant;
       const data = await client.get("/tasks/add", params);
-      return jsonResult(data);
+      return structuredResult(data);
     },
   );
 

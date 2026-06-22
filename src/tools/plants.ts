@@ -2,7 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { Config } from "../config.js";
 import { HortusFoxClient } from "../client.js";
-import { errorResult, jsonResult } from "../result.js";
+import { errorResult, jsonResult, structuredResult } from "../result.js";
 import { registerConfirmableRemove } from "./shared.js";
 
 export function registerPlantTools(
@@ -30,7 +30,13 @@ function registerReads(server: McpServer, client: HortusFoxClient): void {
     // the upstream fix is released.
     "List plants for a given location, paginated.",
     {
-      location: z.number().int().positive().describe("Numeric location id to filter by (e.g. 1). Use locations_list to discover valid ids."),
+      location: z
+        .number()
+        .int()
+        .positive()
+        .describe(
+          "Numeric location id to filter by (e.g. 1). Use locations_list to discover valid ids.",
+        ),
       limit: z
         .number()
         .int()
@@ -39,10 +45,7 @@ function registerReads(server: McpServer, client: HortusFoxClient): void {
         .optional()
         .describe("Max number of plants to return."),
       from: z.number().int().min(0).optional().describe("Pagination offset."),
-      sort: z
-        .enum(["asc", "desc"])
-        .optional()
-        .describe("Sort order by id."),
+      sort: z.enum(["asc", "desc"]).optional().describe("Sort order by id."),
     },
     async (args) => {
       const data = await client.get("/plants/list", args);
@@ -110,9 +113,10 @@ function registerReads(server: McpServer, client: HortusFoxClient): void {
 }
 
 function registerWrites(server: McpServer, client: HortusFoxClient): void {
-  server.tool(
+  server.registerTool(
     "plants_add",
-    `Add a new plant. Returns the new plant id.
+    {
+      description: `Add a new plant. Returns the new plant id.
 
 IMPORTANT — photo workflow (always run after adding):
 After successfully adding the plant, immediately call plants_photo_set with a
@@ -133,16 +137,20 @@ high-quality photo URL found using the following strategy (in order of preferenc
 Always prefer the scientific name over the common name for photo searches.
 If scientific name is unknown, use "<common_name> plant".
 Log the source URL used so the user can verify or replace it later.`,
-    {
-      name: z.string().min(1).describe("Plant name."),
-      location: z
-        .string()
-        .or(z.number().int().positive())
-        .describe("Location id for the new plant."),
+      inputSchema: {
+        name: z.string().min(1).describe("Plant name."),
+        location: z
+          .string()
+          .or(z.number().int().positive())
+          .describe("Location id for the new plant."),
+      },
+      outputSchema: {
+        plant: z.number().int().positive().describe("New plant id."),
+      },
     },
     async (args) => {
       const data = await client.get("/plants/add", args);
-      return jsonResult(data);
+      return structuredResult(data);
     },
   );
 
@@ -159,7 +167,9 @@ Log the source URL used so the user can verify or replace it later.`,
         ),
       value: z
         .string()
-        .describe("New value. Use the literal '#null' to clear. For 'cutting_month', provide a zero-indexed integer (0=January … 11=December)."),
+        .describe(
+          "New value. Use the literal '#null' to clear. For 'cutting_month', provide a zero-indexed integer (0=January … 11=December).",
+        ),
     },
     async (args) => {
       const data = await client.get("/plants/update", args);
@@ -210,18 +220,23 @@ Log the source URL used so the user can verify or replace it later.`,
     },
   );
 
-  server.tool(
+  server.registerTool(
     "plants_gallery_add",
-    "Add a photo to a plant's gallery via URL.",
     {
-      plant: z.string().or(z.number().int().positive()),
-      label: z.string().min(1).describe("Caption for the gallery photo."),
-      photo: z.string().url().describe("Absolute URL of the photo."),
-      external: z
-        .boolean()
-        .optional()
-        .default(true)
-        .describe("Must stay true in v0.1 (multipart upload unsupported)."),
+      description: "Add a photo to a plant's gallery via URL.",
+      inputSchema: {
+        plant: z.string().or(z.number().int().positive()),
+        label: z.string().min(1).describe("Caption for the gallery photo."),
+        photo: z.string().url().describe("Absolute URL of the photo."),
+        external: z
+          .boolean()
+          .optional()
+          .default(true)
+          .describe("Must stay true in v0.1 (multipart upload unsupported)."),
+      },
+      outputSchema: {
+        item: z.number().int().positive().describe("New gallery item id."),
+      },
     },
     async (args) => {
       if (args.external === false) {
@@ -230,7 +245,7 @@ Log the source URL used so the user can verify or replace it later.`,
         );
       }
       const data = await client.get("/plants/gallery/add", args);
-      return jsonResult(data);
+      return structuredResult(data);
     },
   );
 
@@ -322,16 +337,21 @@ Log the source URL used so the user can verify or replace it later.`,
     ["plant"],
   );
 
-  server.tool(
+  server.registerTool(
     "plants_log_add",
-    "Add a log entry to a plant. Returns the new log id.",
     {
-      plant: z.string().or(z.number().int().positive()),
-      content: z.string().min(1),
+      description: "Add a log entry to a plant. Returns the new log id.",
+      inputSchema: {
+        plant: z.string().or(z.number().int().positive()),
+        content: z.string().min(1),
+      },
+      outputSchema: {
+        logid: z.number().int().positive().describe("New log entry id."),
+      },
     },
     async (args) => {
       const data = await client.get("/plants/log/add", args);
-      return jsonResult(data);
+      return structuredResult(data);
     },
   );
 

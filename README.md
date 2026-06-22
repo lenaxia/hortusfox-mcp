@@ -5,7 +5,8 @@ An [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server that 
 ## Features
 
 - **37 tools** across 7 domains: plants, locations, tasks, inventory, calendar, chat, backup
-- **11 resources** (plant photos, logs, gallery) via `hortusfox://` URIs
+- **9 resources** (plants, locations, inventory, tasks, calendar) via `hortusfox://` URIs
+- **8 tools return typed structured output** (new ids / amounts) for reliable chaining
 - Read-only mode by default; writes gated behind `HORTUSFOX_ENABLE_WRITES`
 - Backup tools gated behind `HORTUSFOX_ENABLE_BACKUP`
 - Confirm-before-delete pattern on all remove operations
@@ -130,9 +131,15 @@ All settings are via environment variables:
 
 | URI | Description |
 |---|---|
-| `hortusfox://plant/{id}/photo` | Plant's primary photo |
-| `hortusfox://plant/{id}/log` | Plant's log entries |
-| `hortusfox://plant/{id}/gallery` | Plant's gallery photos |
+| `hortusfox://plants` | All plants |
+| `hortusfox://plants/{id}` | A single plant with attributes |
+| `hortusfox://plants/{id}/log` | Log entries for a plant |
+| `hortusfox://plants/{id}/gallery` | Gallery photos for a plant |
+| `hortusfox://locations` | All locations with plant counts |
+| `hortusfox://locations/{id}` | A single location with its plants |
+| `hortusfox://inventory` | All inventory items |
+| `hortusfox://tasks` | Open tasks |
+| `hortusfox://calendar` | Calendar entries (next 30 days) |
 
 ## Upstream API Quirks
 
@@ -143,6 +150,23 @@ Some HortusFox edit endpoints clobber null fields — they UPDATE all columns un
 - `calendar_edit` — requires `name`, `date_from`
 
 Additionally, `tasks_edit` has a subtle issue: omitting `recurring_scope` defaults it to `"hours"` server-side, silently overwriting an existing scope. Always set `recurring_scope` when passing `recurring_time`.
+
+## Structured Outputs
+
+Eight tools that return a scalar (a new id or an amount) publish a typed `outputSchema` and return `structuredContent` alongside the text body, so LLM clients can read the result without parsing JSON:
+
+| Tool | Returned field |
+|---|---|
+| `plants_add` | `plant` (new plant id) |
+| `plants_gallery_add` | `item` (new gallery item id) |
+| `plants_log_add` | `logid` (new log entry id) |
+| `tasks_add` | `item` (new task id) |
+| `inventory_add` | `item` (new inventory item id) |
+| `inventory_increment` | `amount` (new amount) |
+| `inventory_decrement` | `amount` (new amount) |
+| `calendar_add` | `item` (new calendar entry id) |
+
+All other tools return JSON as text only.
 
 ## Development
 

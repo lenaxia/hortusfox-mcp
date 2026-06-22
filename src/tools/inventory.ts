@@ -2,7 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { Config } from "../config.js";
 import { HortusFoxClient } from "../client.js";
-import { jsonResult } from "../result.js";
+import { jsonResult, structuredResult } from "../result.js";
 import { registerConfirmableRemove } from "./shared.js";
 
 export function registerInventoryTools(
@@ -17,27 +17,33 @@ export function registerInventoryTools(
 
   if (!config.enableWrites) return;
 
-  server.tool(
+  server.registerTool(
     "inventory_add",
-    "Add a new inventory item. Returns the new item id. " +
-      "The group must be an existing inventory group token.",
     {
-      name: z.string().min(1),
-      description: z.string().optional().default(""),
-      tags: z.string().optional().default(""),
-      location: z.string().or(z.number().int().positive()).optional(),
-      amount: z.number().int().min(0).optional().default(0),
-      group: z
-        .string()
-        .min(1)
-        .describe(
-          "Inventory group token (must already exist in the workspace).",
-        ),
-      photo: z.string().url().optional().describe("Optional photo URL."),
+      description:
+        "Add a new inventory item. Returns the new item id. " +
+        "The group must be an existing inventory group token.",
+      inputSchema: {
+        name: z.string().min(1),
+        description: z.string().optional().default(""),
+        tags: z.string().optional().default(""),
+        location: z.string().or(z.number().int().positive()).optional(),
+        amount: z.number().int().min(0).optional().default(0),
+        group: z
+          .string()
+          .min(1)
+          .describe(
+            "Inventory group token (must already exist in the workspace).",
+          ),
+        photo: z.string().url().optional().describe("Optional photo URL."),
+      },
+      outputSchema: {
+        item: z.number().int().positive().describe("New inventory item id."),
+      },
     },
     async (args) => {
       const data = await client.get("/inventory/add", args);
-      return jsonResult(data);
+      return structuredResult(data);
     },
   );
 
@@ -62,27 +68,39 @@ export function registerInventoryTools(
     },
   );
 
-  server.tool(
+  server.registerTool(
     "inventory_increment",
-    "Increment an inventory item's amount by 1. Returns the new amount.",
     {
-      item: z.string().or(z.number().int().positive()),
+      description:
+        "Increment an inventory item's amount by 1. Returns the new amount.",
+      inputSchema: {
+        item: z.string().or(z.number().int().positive()),
+      },
+      outputSchema: {
+        amount: z.number().int().describe("New amount after increment."),
+      },
     },
     async (args) => {
       const data = await client.get("/inventory/amount/inc", args);
-      return jsonResult(data);
+      return structuredResult(data);
     },
   );
 
-  server.tool(
+  server.registerTool(
     "inventory_decrement",
-    "Decrement an inventory item's amount by 1. Returns the new amount.",
     {
-      item: z.string().or(z.number().int().positive()),
+      description:
+        "Decrement an inventory item's amount by 1. Returns the new amount.",
+      inputSchema: {
+        item: z.string().or(z.number().int().positive()),
+      },
+      outputSchema: {
+        amount: z.number().int().describe("New amount after decrement."),
+      },
     },
     async (args) => {
       const data = await client.get("/inventory/amount/dec", args);
-      return jsonResult(data);
+      return structuredResult(data);
     },
   );
 

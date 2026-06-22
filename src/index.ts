@@ -1,5 +1,9 @@
 #!/usr/bin/env node
-import { createServer as createHttpServer, IncomingMessage, ServerResponse } from "node:http";
+import {
+  createServer as createHttpServer,
+  IncomingMessage,
+  ServerResponse,
+} from "node:http";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -108,7 +112,11 @@ async function runHttp(config: Config): Promise<void> {
           await server.connect(transport);
         } else {
           res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Bad request: missing or unknown session ID" }));
+          res.end(
+            JSON.stringify({
+              error: "Bad request: missing or unknown session ID",
+            }),
+          );
           return;
         }
 

@@ -2,7 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { Config } from "../config.js";
 import { HortusFoxClient } from "../client.js";
-import { jsonResult } from "../result.js";
+import { jsonResult, structuredResult } from "../result.js";
 import { registerConfirmableRemove } from "./shared.js";
 
 export function registerCalendarTools(
@@ -33,24 +33,32 @@ export function registerCalendarTools(
 
   if (!config.enableWrites) return;
 
-  server.tool(
+  server.registerTool(
     "calendar_add",
-    "Add a calendar entry. If date_till is omitted, defaults to date_from + 1 day.",
     {
-      name: z.string().min(1),
-      date_from: z.string().describe("ISO date (YYYY-MM-DD)."),
-      date_till: z
-        .string()
-        .optional()
-        .describe("ISO date (YYYY-MM-DD). Defaults to date_from + 1 day."),
-      class: z
-        .string()
-        .optional()
-        .describe("Calendar class name. Unknown classes get a fallback color."),
+      description:
+        "Add a calendar entry. If date_till is omitted, defaults to date_from + 1 day.",
+      inputSchema: {
+        name: z.string().min(1),
+        date_from: z.string().describe("ISO date (YYYY-MM-DD)."),
+        date_till: z
+          .string()
+          .optional()
+          .describe("ISO date (YYYY-MM-DD). Defaults to date_from + 1 day."),
+        class: z
+          .string()
+          .optional()
+          .describe(
+            "Calendar class name. Unknown classes get a fallback color.",
+          ),
+      },
+      outputSchema: {
+        item: z.number().int().positive().describe("New calendar entry id."),
+      },
     },
     async (args) => {
       const data = await client.get("/calendar/add", args);
-      return jsonResult(data);
+      return structuredResult(data);
     },
   );
 

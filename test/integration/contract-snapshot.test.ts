@@ -149,4 +149,28 @@ describe("tool roster contract (snapshot)", () => {
       await close();
     }
   });
+
+  it("H-contract-006: exactly the 8 scalar-returning tools carry an outputSchema", async () => {
+    const EXPECTED_STRUCTURED = [
+      "calendar_add",
+      "inventory_add",
+      "inventory_decrement",
+      "inventory_increment",
+      "plants_add",
+      "plants_gallery_add",
+      "plants_log_add",
+      "tasks_add",
+    ];
+    const { mcp, close } = await startServer({ enableWrites: true });
+    try {
+      const list = await mcp.listTools();
+      const withOutput = list.tools
+        .filter((t) => t.outputSchema !== undefined)
+        .map((t) => t.name)
+        .sort();
+      expect(withOutput).toEqual(EXPECTED_STRUCTURED);
+    } finally {
+      await close();
+    }
+  });
 });

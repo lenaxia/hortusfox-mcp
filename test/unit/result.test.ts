@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { jsonResult, textResult, errorResult } from "../../src/result.js";
+import {
+  jsonResult,
+  textResult,
+  errorResult,
+  structuredResult,
+} from "../../src/result.js";
 
 describe("result helpers", () => {
   it("H-res-001: jsonResult wraps JSON text and isError falsy", () => {
@@ -22,5 +27,15 @@ describe("result helpers", () => {
     const r = errorResult("boom");
     expect((r.content[0] as { text: string }).text).toBe("Error: boom");
     expect(r.isError).toBe(true);
+  });
+
+  it("H-res-004: structuredResult sets structuredContent and text", () => {
+    const r = structuredResult({ plant: 42 });
+    expect(r.content).toHaveLength(1);
+    expect(JSON.parse((r.content[0] as { text: string }).text)).toEqual({
+      plant: 42,
+    });
+    expect(r.structuredContent).toEqual({ plant: 42 });
+    expect(r.isError).toBeFalsy();
   });
 });

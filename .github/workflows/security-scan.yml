@@ -46,11 +46,14 @@ jobs:
           node-version: "22"
           cache: npm
 
-      - name: npm audit (production deps only)
-        run: npm audit --omit=dev --audit-level=high || true
+      - name: Install dependencies
+        run: npm ci
 
-      - name: npm audit (all deps)
-        run: npm audit --audit-level=critical
+      - name: npm audit (production deps — blocks on high+)
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: npm audit (dev deps — informational only)
+        run: npm audit --audit-level=critical || true
 
   trivy:
     name: Trivy (CVEs)
@@ -58,19 +61,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Trivy
-        run: |
-          curl -sLO https://github.com/aquasecurity/trivy/releases/download/v0.58.2/trivy_0.58.2_Linux-64bit.tar.gz
-          tar xzf trivy_0.58.2_Linux-64bit.tar.gz
-          sudo mv trivy /usr/local/bin/
-          trivy --version
-
       - name: Trivy filesystem scan
-        run: |
-          trivy fs \
-            --severity HIGH,CRITICAL \
-            --exit-code 1 \
-            --skip-dirs node_modules \
-            --skip-dirs dist \
-            --skip-dirs coverage \
-            .
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          skip-dirs: node_modules,dist,coverage

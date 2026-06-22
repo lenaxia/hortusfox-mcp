@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { HortusFoxClient } from "../client.js";
+import { toResource } from "./shared.js";
 
 export function registerPlantResources(
   server: McpServer,
@@ -61,16 +62,4 @@ export function registerPlantResources(
       return toResource(uri.href, data);
     },
   );
-}
-
-function toResource(uri: string, data: unknown) {
-  return {
-    contents: [
-      {
-        uri,
-        mimeType: "application/json",
-        text: JSON.stringify(data, null, 2),
-      },
-    ],
-  };
 }
