@@ -73,7 +73,7 @@ describe("entry / createServer", () => {
     try {
       const result = await client.callTool({
         name: "plants_list",
-        arguments: {},
+        arguments: { location: 1 },
       });
       expect(result.isError).toBeFalsy();
     } finally {

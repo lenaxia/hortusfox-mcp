@@ -239,7 +239,10 @@ describe("e2e: DNS / unreachable hosts (#7)", () => {
       "http://nonexistent.invalid.domain.example",
     );
     try {
-      const result = await mcp.callTool({ name: "plants_list", arguments: {} });
+      const result = await mcp.callTool({
+        name: "plants_list",
+        arguments: { location: 1 },
+      });
       expect(result.isError).toBe(true);
       expect(bodyText(result)).toContain("unreachable");
     } finally {
@@ -250,7 +253,10 @@ describe("e2e: DNS / unreachable hosts (#7)", () => {
   it("U-e2e-026: connection refused (closed port) -> network error result", async () => {
     const { mcp, close } = await buildMcpClient("http://127.0.0.1:9");
     try {
-      const result = await mcp.callTool({ name: "plants_list", arguments: {} });
+      const result = await mcp.callTool({
+        name: "plants_list",
+        arguments: { location: 1 },
+      });
       expect(result.isError).toBe(true);
       expect(bodyText(result)).toContain("unreachable");
     } finally {
@@ -261,7 +267,10 @@ describe("e2e: DNS / unreachable hosts (#7)", () => {
   it("U-e2e-027: malformed base URL (later) -> network error result", async () => {
     const { mcp, close } = await buildMcpClient("http://localhost:1");
     try {
-      const result = await mcp.callTool({ name: "plants_list", arguments: {} });
+      const result = await mcp.callTool({
+        name: "plants_list",
+        arguments: { location: 1 },
+      });
       expect(result.isError).toBe(true);
     } finally {
       await close();

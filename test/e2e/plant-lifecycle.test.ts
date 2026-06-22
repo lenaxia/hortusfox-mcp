@@ -20,9 +20,9 @@ interface MockState {
 function freshState(): MockState {
   return {
     plants: [
-      { id: 1, name: "Monstera", location: 2 },
-      { id: 2, name: "Pothos", location: 2 },
-      { id: 3, name: "Snake plant", location: 3 },
+      { id: 1, name: "Monstera", location: 1 },
+      { id: 2, name: "Pothos", location: 1 },
+      { id: 3, name: "Snake plant", location: 1 },
     ],
     nextId: 100,
     logs: [],
@@ -199,7 +199,10 @@ describe("e2e: plant lifecycle", () => {
   });
 
   it("W-e2e-001: browse returns seeded plants", async () => {
-    const result = await mcp.callTool({ name: "plants_list", arguments: {} });
+    const result = await mcp.callTool({
+      name: "plants_list",
+      arguments: { location: 1 },
+    });
     const data = JSON.parse(bodyText(result));
     expect(data.list).toHaveLength(3);
     expect(data.list.map((p: { name: string }) => p.name)).toEqual(
@@ -226,7 +229,7 @@ describe("e2e: plant lifecycle", () => {
 
     const listResult = await mcp.callTool({
       name: "plants_list",
-      arguments: {},
+      arguments: { location: 2 },
     });
     const list = JSON.parse(bodyText(listResult)).list as Array<{ id: number }>;
     expect(list.some((p) => p.id === 100)).toBe(true);

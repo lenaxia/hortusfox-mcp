@@ -52,7 +52,10 @@ describe("e2e: auth and error propagation", () => {
     );
     const { mcp, close } = await buildMcpClient(mock.url);
     try {
-      const result = await mcp.callTool({ name: "plants_list", arguments: {} });
+      const result = await mcp.callTool({
+        name: "plants_list",
+        arguments: { location: 1 },
+      });
       expect(result.isError).toBe(true);
       expect(bodyText(result)).toMatch(/regenerate/i);
     } finally {
@@ -73,7 +76,10 @@ describe("e2e: auth and error propagation", () => {
     );
     const { mcp, close } = await buildMcpClient(mock.url);
     try {
-      const result = await mcp.callTool({ name: "plants_list", arguments: {} });
+      const result = await mcp.callTool({
+        name: "plants_list",
+        arguments: { location: 1 },
+      });
       expect(result.isError).toBe(true);
       expect(bodyText(result)).toContain("DB connection refused");
     } finally {
@@ -95,7 +101,10 @@ describe("e2e: auth and error propagation", () => {
     );
     const { mcp, close } = await buildMcpClient(mock.url);
     try {
-      const result = await mcp.callTool({ name: "plants_list", arguments: {} });
+      const result = await mcp.callTool({
+        name: "plants_list",
+        arguments: { location: 1 },
+      });
       expect(result.isError).toBe(true);
       expect(bodyText(result)).toContain("HTTP 502");
     } finally {
@@ -107,7 +116,10 @@ describe("e2e: auth and error propagation", () => {
   it("U-e2e-013: TCP unreachable -> network error result", async () => {
     const { mcp, close } = await buildMcpClient("http://127.0.0.1:9");
     try {
-      const result = await mcp.callTool({ name: "plants_list", arguments: {} });
+      const result = await mcp.callTool({
+        name: "plants_list",
+        arguments: { location: 1 },
+      });
       expect(result.isError).toBe(true);
       expect(bodyText(result)).toContain("unreachable");
     } finally {
@@ -127,7 +139,10 @@ describe("e2e: auth and error propagation", () => {
     );
     const { mcp, close } = await buildMcpClient(mock.url, { timeoutMs: 50 });
     try {
-      const result = await mcp.callTool({ name: "plants_list", arguments: {} });
+      const result = await mcp.callTool({
+        name: "plants_list",
+        arguments: { location: 1 },
+      });
       expect(result.isError).toBe(true);
       expect(bodyText(result)).toContain("timed out after 50ms");
     } finally {
@@ -143,7 +158,10 @@ describe("e2e: auth and error propagation", () => {
     );
     const { mcp, close } = await buildMcpClient(mock.url);
     try {
-      const result = await mcp.callTool({ name: "plants_list", arguments: {} });
+      const result = await mcp.callTool({
+        name: "plants_list",
+        arguments: { location: 1 },
+      });
       const text = bodyText(result);
       expect(text).toMatch(/real.*90/);
       expect(text).not.toContain(TOKEN);

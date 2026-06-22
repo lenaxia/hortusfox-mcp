@@ -6,6 +6,8 @@ export interface Config {
   enableWrites: boolean;
   enableBackup: boolean;
   maxRatePerSec: number;
+  transport: "stdio" | "http";
+  httpPort: number;
 }
 
 function required(name: string): string {
@@ -43,6 +45,11 @@ export function loadConfig(): Config {
     process.exit(1);
   }
   const apiToken = required("HORTUSFOX_API_TOKEN");
+  const rawTransport = (process.env["HORTUSFOX_TRANSPORT"] ?? "stdio")
+    .trim()
+    .toLowerCase();
+  const transport: "stdio" | "http" =
+    rawTransport === "http" ? "http" : "stdio";
   return {
     baseUrl,
     apiToken,
@@ -51,5 +58,7 @@ export function loadConfig(): Config {
     enableWrites: bool("HORTUSFOX_ENABLE_WRITES", true),
     enableBackup: bool("HORTUSFOX_ENABLE_BACKUP", false),
     maxRatePerSec: int("HORTUSFOX_MAX_RATE_PER_SEC", 10),
+    transport,
+    httpPort: int("HORTUSFOX_HTTP_PORT", 8000),
   };
 }

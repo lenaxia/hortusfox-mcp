@@ -19,9 +19,24 @@ export function registerPlantTools(
 function registerReads(server: McpServer, client: HortusFoxClient): void {
   server.tool(
     "plants_list",
-    "List plants, optionally filtered by location and paginated.",
+    // NOTE: location is required (not optional) as a workaround for upstream bug
+    // danielbrendel/hortusfox-web#532 — omitting location causes the API to
+    // silently return an empty list due to a PDO null-binding issue in
+    // PlantsModel::getPlantList(). Remove the workaround once the upstream fix
+    // is released.
+    // NOTE: sort is restricted to 'asc'|'desc' as a workaround for upstream bug
+    // danielbrendel/hortusfox-web#533 — any other value is concatenated raw into
+    // the SQL query, producing a syntax error. Remove the enum restriction once
+    // the upstream fix is released.
+    "List plants for a given location, paginated.",
     {
-      location: z.string().optional().describe("Location id to filter by."),
+      location: z
+        .number()
+        .int()
+        .positive()
+        .describe(
+          "Numeric location id to filter by (e.g. 1). Use locations_list to discover valid ids.",
+        ),
       limit: z
         .number()
         .int()
@@ -30,10 +45,7 @@ function registerReads(server: McpServer, client: HortusFoxClient): void {
         .optional()
         .describe("Max number of plants to return."),
       from: z.number().int().min(0).optional().describe("Pagination offset."),
-      sort: z
-        .string()
-        .optional()
-        .describe("Sort order as expected by the upstream API."),
+      sort: z.enum(["asc", "desc"]).optional().describe("Sort order by id."),
     },
     async (args) => {
       const data = await client.get("/plants/list", args);
@@ -104,7 +116,27 @@ function registerWrites(server: McpServer, client: HortusFoxClient): void {
   server.registerTool(
     "plants_add",
     {
-      description: "Add a new plant. Returns the new plant id.",
+      description: `Add a new plant. Returns the new plant id.
+
+IMPORTANT — photo workflow (always run after adding):
+After successfully adding the plant, immediately call plants_photo_set with a
+high-quality photo URL found using the following strategy (in order of preference):
+
+1. Wikimedia Commons (best quality, stable URLs, freely licensed):
+   Search https://commons.wikimedia.org/w/api.php?action=query&list=search&srnamespace=6&srsearch=<scientific_name>&format=json
+   Pick the first result whose title ends in .jpg or .png, then resolve to a
+   full-resolution URL via:
+   https://commons.wikimedia.org/w/api.php?action=query&titles=File:<filename>&prop=imageinfo&iiprop=url&format=json
+   Use the "url" field from imageinfo as the photo URL.
+
+2. If Wikimedia returns no usable result, fall back to a web image search using
+   the query "<scientific_name> plant high resolution" and select a direct .jpg
+   or .png URL from a reputable source (botanical garden, university, iNaturalist,
+   or Wikipedia infobox image).
+
+Always prefer the scientific name over the common name for photo searches.
+If scientific name is unknown, use "<common_name> plant".
+Log the source URL used so the user can verify or replace it later.`,
       inputSchema: {
         name: z.string().min(1).describe("Plant name."),
         location: z
@@ -124,18 +156,20 @@ function registerWrites(server: McpServer, client: HortusFoxClient): void {
 
   server.tool(
     "plants_update_attribute",
-    "Update a single attribute on a plant. Pass value '#null' to clear it.",
+    "Update a single attribute on a plant. Pass value '#null' to clear it. NOTE: the 'cutting_month' attribute is zero-indexed (0=January, 1=February, ..., 11=December).",
     {
       plant: z.string().or(z.number().int().positive()),
       attribute: z
         .string()
         .min(1)
         .describe(
-          "Column name to set (validated against allow-list server-side).",
+          "Column name to set (validated against allow-list server-side). For 'cutting_month': use 0=January, 1=February, ..., 11=December.",
         ),
       value: z
         .string()
-        .describe("New value. Use the literal '#null' to clear."),
+        .describe(
+          "New value. Use the literal '#null' to clear. For 'cutting_month', provide a zero-indexed integer (0=January … 11=December).",
+        ),
     },
     async (args) => {
       const data = await client.get("/plants/update", args);

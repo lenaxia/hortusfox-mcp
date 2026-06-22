@@ -54,7 +54,7 @@ describe("plants tools (integration)", () => {
   afterEach(() => fetcher.restore());
 
   describe("read tools", () => {
-    it("H-int-001: plants_list default returns list, no params besides token", async () => {
+    it("H-int-001: plants_list returns list for a location", async () => {
       fetcher.setDefault({
         status: 200,
         body: { code: 200, list: [{ id: 1 }] },
@@ -63,11 +63,11 @@ describe("plants tools (integration)", () => {
       try {
         const result = await mcp.callTool({
           name: "plants_list",
-          arguments: {},
+          arguments: { location: 1 },
         });
         const { path, query } = parseUrl(fetcher.calls[0].url);
         expect(path).toBe("/api/plants/list");
-        expect(query.has("location")).toBe(false);
+        expect(query.get("location")).toBe("1");
         expect(query.has("limit")).toBe(false);
         expect(JSON.parse(bodyText(result))).toEqual({ list: [{ id: 1 }] });
       } finally {
@@ -92,13 +92,13 @@ describe("plants tools (integration)", () => {
       try {
         await mcp.callTool({
           name: "plants_list",
-          arguments: { location: "3", limit: 10, from: 20, sort: "name" },
+          arguments: { location: 3, limit: 10, from: 20, sort: "asc" },
         });
         const { query } = parseUrl(fetcher.calls[0].url);
         expect(query.get("location")).toBe("3");
         expect(query.get("limit")).toBe("10");
         expect(query.get("from")).toBe("20");
-        expect(query.get("sort")).toBe("name");
+        expect(query.get("sort")).toBe("asc");
       } finally {
         await close();
       }

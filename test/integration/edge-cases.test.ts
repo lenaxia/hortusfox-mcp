@@ -113,6 +113,7 @@ describe("zod schema corner cases (#12)", () => {
     const { mcp, close } = await startServer();
     try {
       const r = await call(mcp, "plants_list", {
+        location: 1,
         limit: 5,
         malicious: "DROP TABLE",
       } as Record<string, unknown>);
@@ -201,21 +202,21 @@ describe("param forwarding (#13)", () => {
     }
   });
 
-  it("plants_list forwards all four optional params", async () => {
+  it("plants_list forwards location + pagination + sort params", async () => {
     fetcher.setDefault({ status: 200, body: { code: 200 } });
     const { mcp, close } = await startServer();
     try {
       await call(mcp, "plants_list", {
-        location: "2",
+        location: 2,
         limit: 10,
         from: 5,
-        sort: "name",
+        sort: "desc",
       });
       const { query } = parseUrl(fetcher.calls[0].url);
       expect(query.get("location")).toBe("2");
       expect(query.get("limit")).toBe("10");
       expect(query.get("from")).toBe("5");
-      expect(query.get("sort")).toBe("name");
+      expect(query.get("sort")).toBe("desc");
     } finally {
       await close();
     }

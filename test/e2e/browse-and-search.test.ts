@@ -56,7 +56,7 @@ describe("e2e: browse and search", () => {
           const all = [
             { id: 1, name: "Desert Rose", location: 4 },
             { id: 2, name: "Moon Cactus", location: 4 },
-            { id: 3, name: "Pothos", location: 2 },
+            { id: 3, name: "Pothos", location: 4 },
           ];
           const list = loc
             ? all.filter((p) => String(p.location) === loc)
@@ -104,7 +104,7 @@ describe("e2e: browse and search", () => {
   it("H-e2e-017: plants_list with location filter is forwarded", async () => {
     await mcp.callTool({
       name: "plants_list",
-      arguments: { location: "4" },
+      arguments: { location: 4 },
     });
     const listCalls = mock.requests.filter(
       (r) => r.path === "/api/plants/list",
@@ -115,7 +115,7 @@ describe("e2e: browse and search", () => {
   it("H-e2e-018: resources/read hortusfox://plants returns same shape as tool", async () => {
     const toolResult = await mcp.callTool({
       name: "plants_list",
-      arguments: {},
+      arguments: { location: 4 },
     });
     const resourceResult = await mcp.readResource({
       uri: "hortusfox://plants",
@@ -171,7 +171,7 @@ describe("e2e: browse and search", () => {
     try {
       await Promise.all(
         Array.from({ length: 12 }, () =>
-          client.callTool({ name: "plants_list", arguments: {} }),
+          client.callTool({ name: "plants_list", arguments: { location: 1 } }),
         ),
       );
       expect(arrivalTimes).toHaveLength(12);
