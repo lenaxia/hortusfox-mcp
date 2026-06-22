@@ -44,12 +44,12 @@ describe("entry / createServer", () => {
     expect(config).toBeDefined();
   });
 
-  it("H-entry-002: assembled server reports name=hortusfox, version=0.1.0", async () => {
+  it("H-entry-002: assembled server reports name=hortusfox, version=0.4.0", async () => {
     const { server } = createServer(validConfig());
     const client = await driveHandshake(server);
     try {
       const info = client.getServerVersion();
-      expect(info).toEqual({ name: "hortusfox", version: "0.1.0" });
+      expect(info).toEqual({ name: "hortusfox", version: "0.4.0" });
     } finally {
       await client.close();
     }

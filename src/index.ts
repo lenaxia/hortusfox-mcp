@@ -25,7 +25,7 @@ export function createServer(config: Config): AssembledServer {
   const client = new HortusFoxClient(config);
   const server = new McpServer({
     name: "hortusfox",
-    version: "0.1.0",
+    version: "0.4.0",
   });
   registerAllResources(server, client);
   registerAllTools(server, client, config);

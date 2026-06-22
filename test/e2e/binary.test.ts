@@ -92,7 +92,7 @@ describe(
       });
       const res = await session.nextResponse();
       expect(res.result).toMatchObject({
-        serverInfo: { name: "hortusfox", version: "0.1.0" },
+        serverInfo: { name: "hortusfox", version: "0.4.0" },
       });
     }, 15_000);
 
