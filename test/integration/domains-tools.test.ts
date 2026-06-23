@@ -96,6 +96,51 @@ describe("domain tools (integration)", () => {
       }
     });
 
+    it("U-loc-004: locations_list rejects SQL injection in include_info", async () => {
+      const { mcp, close } = await startServer({ enableWrites: false });
+      try {
+        const r = await callExpectingError(mcp, "locations_list", {
+          include_plants: true,
+          include_info: "1; DROP TABLE plants",
+        });
+        expectMcpError(r);
+        expect(fetcher.calls).toHaveLength(0);
+      } finally {
+        await close();
+      }
+    });
+
+    it("U-loc-005: locations_list rejects unknown column in include_info", async () => {
+      const { mcp, close } = await startServer({ enableWrites: false });
+      try {
+        const r = await callExpectingError(mcp, "locations_list", {
+          include_info: "password",
+        });
+        expectMcpError(r);
+        expect(fetcher.calls).toHaveLength(0);
+      } finally {
+        await close();
+      }
+    });
+
+    it("H-loc-006: locations_list accepts multiple valid columns", async () => {
+      fetcher.setDefault({ status: 200, body: { code: 200, list: [] } });
+      const { mcp, close } = await startServer({ enableWrites: false });
+      try {
+        await mcp.callTool({
+          name: "locations_list",
+          arguments: {
+            include_plants: true,
+            include_info: "id,name,photo,scientific_name",
+          },
+        });
+        const { query } = parseUrl(lastCall(fetcher).url);
+        expect(query.get("include_info")).toBe("id,name,photo,scientific_name");
+      } finally {
+        await close();
+      }
+    });
+
     it("H-loc-003: locations_info forwards location and include_plants", async () => {
       fetcher.setDefault({ status: 200, body: { code: 200, data: { id: 3 } } });
       const { mcp, close } = await startServer({ enableWrites: false });
