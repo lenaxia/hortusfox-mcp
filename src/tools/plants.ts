@@ -284,7 +284,9 @@ Log the source URL used so the user can verify or replace it later.`,
     {
       plant: z.string().or(z.number().int().positive()),
       label: z.string().min(1),
-      datatype: z.string().min(1).describe("Attribute datatype."),
+      datatype: z
+        .enum(["bool", "int", "double", "string", "datetime"])
+        .describe("Attribute datatype."),
       content: z.string().describe("Attribute value."),
     },
     async (args) => {
@@ -301,7 +303,7 @@ Log the source URL used so the user can verify or replace it later.`,
     {
       plant: z.string().or(z.number().int().positive()),
       label: z.string().min(1),
-      datatype: z.string().min(1),
+      datatype: z.enum(["bool", "int", "double", "string", "datetime"]),
       content: z.string(),
     },
     async (args) => {

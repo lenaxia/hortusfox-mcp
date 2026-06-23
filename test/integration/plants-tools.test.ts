@@ -373,13 +373,13 @@ describe("plants tools (integration)", () => {
           arguments: {
             plant: 1,
             label: "height",
-            datatype: "number",
+            datatype: "int",
             content: "12",
           },
         });
         const { query } = parseUrl(lastCall(fetcher).url);
         expect(query.get("label")).toBe("height");
-        expect(query.get("datatype")).toBe("number");
+        expect(query.get("datatype")).toBe("int");
         expect(query.get("content")).toBe("12");
       } finally {
         await close();
@@ -395,7 +395,7 @@ describe("plants tools (integration)", () => {
           arguments: {
             plant: 1,
             label: "height",
-            datatype: "number",
+            datatype: "int",
             content: "15",
           },
         });
